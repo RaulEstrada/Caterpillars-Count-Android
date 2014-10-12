@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pre-dex-items>
+
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/classes-f1572c7779981d39241a3baacee7cb963462970c.jar"
+        jar="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/exploded-aar/com.github.gabrielemariotti.cards/library/1.9.0/classes.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="81bd93a92a115746312a8f583fbd057137cb2ce7"/>
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/android-async-http-1.4.6-7d83d46e42925c40a120ba6bb9680a2df748021a.jar"
+        jar="/Users/justinforsyth/.gradle/caches/modules-2/files-2.1/com.loopj.android/android-async-http/1.4.6/a845a88238be0b5be9d238652c1bc0605ef91f52/android-async-http-1.4.6.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="a845a88238be0b5be9d238652c1bc0605ef91f52"/>
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/classes-78e625591aeab89808f5e3884c51963f4b5f8b5a.jar"
+        jar="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/exploded-aar/com.doomonafireball.betterpickers/library/1.5.2/classes.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="73d0c7e564f21532cdda0b0c93b07be5aee87e7d"/>
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/classes-15fd7ab0381895d3c70c63ce0e332b2b7e9e27a5.jar"
+        jar="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/exploded-aar/com.daimajia.androidanimations/library/1.1.2/classes.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="85ccb558dc8258ecf4f0a19e97a3114ec2c64cb4"/>
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/androidasync-1.3.8-d6d4b0d86c42c2c5744add9717bca8fd2929d59a.jar"
+        jar="/Users/justinforsyth/.gradle/caches/modules-2/files-2.1/com.koushikdutta.async/androidasync/1.3.8/1f8e4f77d5f24179688c32b24dd5f79e889e7110/androidasync-1.3.8.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="1f8e4f77d5f24179688c32b24dd5f79e889e7110"/>
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/internal_impl-20.0.0-567e1a6bcd516fff5013fe794378568221af4681.jar"
+        jar="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/exploded-aar/com.android.support/support-v4/20.0.0/libs/internal_impl-20.0.0.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="e40b3078e3fbd353c9f44da8df25a8fc0078209d"/>
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/ion-1.3.8-4d933f284178030d943ffecd02931f7fc889a962.jar"
+        jar="/Users/justinforsyth/.gradle/caches/modules-2/files-2.1/com.koushikdutta.ion/ion/1.3.8/1fc0413880bde2e3ffab3c5e5a243f39dd409b1c/ion-1.3.8.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="1fc0413880bde2e3ffab3c5e5a243f39dd409b1c"/>
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/support-annotations-20.0.0-bca9cd8c8082330ef7549e0398af852faae531fd.jar"
+        jar="/Applications/Android Studio.app/sdk/extras/android/m2repository/com/android/support/support-annotations/20.0.0/support-annotations-20.0.0.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="9d9013e9ff35fc3756411e62873c363c70c638fa"/>
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/classes-02ebd1eb403fa3826108501e44ef8c7be5b25381.jar"
+        jar="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/exploded-aar/com.android.support/support-v4/20.0.0/classes.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="8694693636ab36910c8100ce527c258ff3ebece0"/>
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/library-2.4.0-b9dbc038643b79858f51ef135e794b0cbd6a401e.jar"
+        jar="/Users/justinforsyth/.gradle/caches/modules-2/files-2.1/com.nineoldandroids/library/2.4.0/e9b63380f3a242dbdbf103a2355ad7e43bad17cb/library-2.4.0.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="e9b63380f3a242dbdbf103a2355ad7e43bad17cb"/>
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/classes-5df7e91c983c4978dece4bcddc1350492d1190a9.jar"
+        jar="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/exploded-aar/com.daimajia.easing/library/1.0.0/classes.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="e88a9ed27f98f8c0701d03d5553ce6111ca34a5b"/>
+    <item
+        dex="/Users/justinforsyth/Dropbox/Documents/Android Studio Workspace/CaterpillarCount/app/build/intermediates/pre-dexed/debug/gson-2.3-0f911258749bbcdbea4d5543f2e9e29c10da9fa6.jar"
+        jar="/Users/justinforsyth/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.3/5fc52c41ef0239d1093a1eb7c3697036183677ce/gson-2.3.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="5fc52c41ef0239d1093a1eb7c3697036183677ce"/>
+
+</pre-dex-items>

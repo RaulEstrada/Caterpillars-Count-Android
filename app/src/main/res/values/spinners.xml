@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="site_array">
+        <item>Boston</item>
+        <item>New York</item>
+        <item>Los Angeles</item>
+        <item>Miami</item>
+        <item>Chicago</item>
+        <item>San Francisco</item>
+        <item>Washington DC</item>
+        <item>Dallas</item>
+    </string-array>
+    <string-array name="circle_array">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+    </string-array>
+    <string-array name="survey_array">
+        <item>A</item>
+        <item>B</item>
+        <item>C</item>
+        <item>D</item>
+        <item>E</item>
+    </string-array>
+    <string-array name="herbivory_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+    <string-array name="temp_array">
+        <item>Below 40F</item>
+        <item>40-50F</item>
+        <item>50-60F</item>
+        <item>60-70F</item>
+        <item>70-80F</item>
+        <item>80-90F</item>
+        <item>90-100F</item>
+        <item>Above 100F</item>
+    </string-array>
+    <string-array name="order_array">
+        <item>Beetles (Coleoptera)</item>
+        <item>Caterpillars (Lepidoptera larvae)</item>
+    </string-array>
+</resources>
