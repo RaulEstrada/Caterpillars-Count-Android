@@ -60,6 +60,7 @@
             android:layout_marginTop="20dp"
             android:textStyle="bold"
             android:textColor="#355D3D"
+            android:onClick="takePicture"
             android:layout_centerHorizontal="true"
             android:text="@string/plant_photo_button_text"
             android:layout_width="150dp"
@@ -69,7 +70,7 @@
             android:layout_marginTop="40dp"
             android:background="#355D3D"
             android:textColor="#FFFFFF"
-            android:text="@string/submit"
+            android:text="@string/save"
             android:onClick="submit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />

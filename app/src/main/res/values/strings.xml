@@ -57,5 +57,8 @@
     <string name="login_invalidCredentials">Invalid email address or password</string>
     <string name="login_userDownloadFailure">Failed to download user data</string>
     <string name="forgot_password">Forgot password</string>
+    <string name="save">Save</string>
+    <string name="order_invalidCount">Count format is invalid</string>
+    <string name="order_invalidLength">Length format is invalid</string>
 
 </resources>
