@@ -19,13 +19,13 @@
     <string name="notes">Notes</string>
     <string name="new_button">NEW</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="plant_species">Plant Species (if known)</string>
+    <string name="plant_species_hint">Plant Species (if known)</string>
     <string name="plant_info">Plant Information</string>
     <string name="ordercards_fragment_hint">Tap NEW to add Arthropod Orders!</string>
     <string name="plant_photo">Plant Photo</string>
     <string name="plant_photo_button_text">CAPTURE</string>
     <string name="submit">SUBMIT</string>
-    <string name="length">Length (mm)</string>
+    <string name="length">Length (1 to 300 mm)</string>
     <string name="count">Count (1 to 1000)</string>
     <string name="order_photo">Photo</string>
     <string name="card_length">Length: </string>
@@ -60,5 +60,8 @@
     <string name="save">Save</string>
     <string name="order_invalidCount">Count format is invalid</string>
     <string name="order_invalidLength">Length format is invalid</string>
+    <string name="site_notes">Site notes</string>
+    <string name="plant_species">Plant Species</string>
+
 
 </resources>

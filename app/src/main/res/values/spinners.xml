@@ -45,7 +45,11 @@
         <item>Above 100F</item>
     </string-array>
     <string-array name="order_array">
+        <item>Ants (Formicidae)</item>
+        <item>Aphids and Psyllids (Sternorrhyncha)</item>
+
         <item>Beetles (Coleoptera)</item>
         <item>Caterpillars (Lepidoptera larvae)</item>
+
     </string-array>
 </resources>

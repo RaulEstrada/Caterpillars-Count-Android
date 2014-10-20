@@ -73,6 +73,12 @@
         <item name="android:background">@drawable/btn_cab_done_example</item>
     </style>
 
+    <style name="card_thumbnail_outer_layout">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginLeft">10dp</item>
+    </style>
+
     <!-- this style is only referenced in a Light.DarkActionBar based theme -->
     <style name="Theme.Example.Widget" parent="@android:style/Theme.Holo">
         <item name="android:popupMenuStyle">@style/PopupMenu.Example</item>

@@ -139,12 +139,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
+        <TextView
+            android:id="@+id/sitenotes_text"
+            android:text="@string/notes"
+            android:layout_marginTop="5dp"
+            android:textColor="#355D3D"
+            android:textSize="18sp"
+            android:layout_width="wrap_content"
+            android:layout_below="@id/survey_spinner"
+            android:layout_height="wrap_content" />
         <EditText
             android:id="@+id/sitenotes_edittext"
-            android:layout_below="@id/survey_spinner"
+            android:layout_below="@id/sitenotes_text"
             android:layout_width="match_parent"
             android:layout_marginTop="5dp"
-            android:hint="@string/notes"
+            android:hint="@string/site_notes"
             android:layout_height="wrap_content" />
 
         <TextView
@@ -173,7 +182,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/new_button"/>
-        <fragment android:name="jforce.com.caterpillarcount.OrderCardFragment"
+        <fragment android:name="com.jforce.caterpillarscount.OrderCardFragment"
             android:id="@+id/order_card_fragment"
             android:layout_width="match_parent"
             android:layout_marginTop="20dp"
@@ -190,13 +199,22 @@
             android:textColor="#355D3D"
             android:text="@string/plant_info"
             android:layout_below="@id/order_card_fragment"/>
+        <TextView
+            android:id="@+id/plantnotes_text"
+            android:text="@string/plant_species"
+            android:layout_marginTop="20dp"
+            android:textColor="#355D3D"
+            android:textSize="18sp"
+            android:layout_width="wrap_content"
+            android:layout_below="@id/plantinfo_text"
+            android:layout_height="wrap_content" />
         <EditText
             android:id="@+id/plantspecies_edittext"
-            android:layout_below="@id/plantinfo_text"
+            android:layout_below="@id/plantnotes_text"
             android:layout_width="match_parent"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="5dp"
             android:maxLines="1"
-            android:hint="@string/plant_species"
+            android:hint="@string/plant_species_hint"
             android:layout_height="wrap_content" />
 
         <TextView
@@ -231,7 +249,7 @@
             android:layout_marginTop="20dp"
             android:textStyle="bold"
             android:textColor="#355D3D"
-            android:onClick="capturePhoto"
+            android:onClick="takePicture"
             android:layout_centerHorizontal="true"
             android:text="@string/plant_photo_button_text"
             android:layout_width="150dp"
@@ -241,6 +259,7 @@
             android:layout_marginTop="20dp"
             android:background="#355D3D"
             android:textColor="#FFFFFF"
+            android:onClick="submit"
             android:text="@string/submit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
