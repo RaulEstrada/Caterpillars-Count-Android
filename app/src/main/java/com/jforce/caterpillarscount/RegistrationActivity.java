@@ -17,7 +17,9 @@ import com.google.gson.JsonObject;
 import com.koushikdutta.ion.Ion;
 import com.koushikdutta.ion.Response;
 
+import org.apache.http.entity.StringEntity;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 
@@ -60,7 +62,8 @@ public class RegistrationActivity extends Activity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == android.R.id.home) {
-            NavUtils.navigateUpFromSameTask(this);
+            //NavUtils.navigateUpFromSameTask(this);
+            onBackPressed();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -132,18 +135,31 @@ public class RegistrationActivity extends Activity {
         //make sure a password is actually entered
         if (password != null && !password.isEmpty()) {
 
-            JsonObject json = new JsonObject();
-            json.addProperty("email", emailAddress);
-            json.addProperty("password", password);
-            json.addProperty("name", fname + " " + lname);
+//            JsonObject json = new JsonObject();
+//            json.addProperty("email", emailAddress);
+//            json.addProperty("password", password);
+//            json.addProperty("name", fname + " " + lname);
 
-            //POST to backend
-            Ion.with(this)
-                    .load(BASE_URL + "users.php")
-                    .setJsonObjectBody(json)
-                    .asJsonObject()
-                    .withResponse()
-                    .setCallback(new RegistrationFutureCallback<Response<JsonObject>>(this, emailAddress, password));
+//            //POST to backend
+//            Ion.with(this)
+//                    .load(BASE_URL + "users.php")
+//                    .setJsonObjectBody(json)
+//                    .asJsonObject()
+//                    .withResponse()
+//                    .setCallback(new RegistrationFutureCallback<Response<JsonObject>>(this, emailAddress, password));
+
+
+
+            //construct the JSON object to be POSTed
+            JSONObject jsonParams = new JSONObject();
+            jsonParams.put("email", emailAddress);
+            jsonParams.put("password", password);
+            jsonParams.put("name", fname + " " + lname);
+            StringEntity entity = new StringEntity(jsonParams.toString());
+
+            RegistrationResponseHandler handler = new RegistrationResponseHandler(this, emailAddress, password);
+
+            RestClient.post(this, "users.php", entity, "application/json", handler);
 
         }
         else{

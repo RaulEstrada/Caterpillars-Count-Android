@@ -81,7 +81,8 @@ public class LoginActivity extends Activity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == android.R.id.home) {
-            NavUtils.navigateUpFromSameTask(this);
+            //NavUtils.navigateUpFromSameTask(this);
+            onBackPressed();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -123,6 +124,8 @@ public class LoginActivity extends Activity {
             jsonParams.put("email", emailAddress);
             jsonParams.put("password", password);
             StringEntity entity = new StringEntity(jsonParams.toString());
+
+
 
             LoginCredentialsResponseHandler loginResponseHandler = new LoginCredentialsResponseHandler(this);
 
@@ -167,6 +170,7 @@ public class LoginActivity extends Activity {
         JSONObject jsonParams = new JSONObject();
         jsonParams.put("email", emailAddress);
         StringEntity entity = new StringEntity(jsonParams.toString());
+
 
         LoginUserResponseHandler loginResponseHandler = new LoginUserResponseHandler(this);
 

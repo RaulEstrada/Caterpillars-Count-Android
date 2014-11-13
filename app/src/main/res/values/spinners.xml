@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="site_array">
-        <item>Boston</item>
-        <item>New York</item>
-        <item>Los Angeles</item>
-        <item>Miami</item>
-        <item>Chicago</item>
-        <item>San Francisco</item>
-        <item>Washington DC</item>
-        <item>Dallas</item>
+        <item>Demo Site</item>
     </string-array>
     <string-array name="circle_array">
         <item>1</item>
@@ -28,12 +21,34 @@
         <item>E</item>
     </string-array>
     <string-array name="herbivory_array">
+        <item>0 - None</item>
+        <item>1 - Trace, less than 5%</item>
+        <item>2 - Light, 5% to 10%</item>
+        <item>3 - Moderate, 10% to 25%</item>
+        <item>4 - Heavy, greater than 25%</item>
+    </string-array>
+    <integer-array name="herbivory_array_values">
         <item>0</item>
         <item>1</item>
         <item>2</item>
         <item>3</item>
         <item>4</item>
+    </integer-array>
+
+    <string-array name="herbivory_array_images_left">
+        <item>@drawable/leaf_0herbivory_green</item>
+        <item>@drawable/leaf_5pct_herbivory_green</item>
+        <item>@drawable/leaf_10pct_herbivory_green</item>
+        <item>@drawable/leaf_25pct_herbivory_green</item>
     </string-array>
+
+    <string-array name="herbivory_array_images_right">
+        <item>@drawable/leaf_5pct_herbivory_green</item>
+        <item>@drawable/leaf_10pct_herbivory_green</item>
+        <item>@drawable/leaf_25pct_herbivory_green</item>
+        <item>@drawable/leaf_max_herbivory_green</item>
+    </string-array>
+
     <string-array name="temp_array">
         <item>Below 40F</item>
         <item>40-50F</item>
@@ -44,12 +59,56 @@
         <item>90-100F</item>
         <item>Above 100F</item>
     </string-array>
-    <string-array name="order_array">
-        <item>Ants (Formicidae)</item>
-        <item>Aphids and Psyllids (Sternorrhyncha)</item>
 
+    <integer-array name="temp_array_min">
+        <item>30</item>
+        <item>40</item>
+        <item>50</item>
+        <item>60</item>
+        <item>70</item>
+        <item>80</item>
+        <item>90</item>
+        <item>100</item>
+    </integer-array>
+
+    <integer-array name="temp_array_max">
+        <item>40</item>
+        <item>50</item>
+        <item>60</item>
+        <item>70</item>
+        <item>80</item>
+        <item>90</item>
+        <item>100</item>
+        <item>110</item>
+    </integer-array>
+
+
+
+    <string-array name="order_array">
+        <item>Bees and Wasps (Hymenoptera, excluding ants)</item>
         <item>Beetles (Coleoptera)</item>
         <item>Caterpillars (Lepidoptera larvae)</item>
+        <item>Daddy longlegs (Opiliones)</item>
+        <item>Flies (Diptera)</item>
+        <item>Grasshoppers, Crickets (Orthoptera)</item>
+        <item>Leaf hoppers and Cicadas (Auchenorrhyncha)</item>
+        <item>Moths, Butterflies (Lepidoptera)</item>
+        <item>Spiders (Araneae)</item>
+        <item>OTHER (describe in Notes)</item>
+        <item>UNIDENTIFIED (describe in Notes)</item>
+    </string-array>
 
+    <string-array name="order_array_pics">
+        <item>@drawable/bee</item>
+        <item>@drawable/beetle</item>
+        <item>@drawable/caterpillar</item>
+        <item>@drawable/daddylonglegs</item>
+        <item>@drawable/fly</item>
+        <item>@drawable/grasshopper</item>
+        <item>@drawable/leafhopper</item>
+        <item>@drawable/moths</item>
+        <item>@drawable/spider</item>
+        <item>@drawable/other</item>
+        <item>@drawable/other</item>
     </string-array>
 </resources>

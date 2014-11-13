@@ -19,6 +19,8 @@ public class SiteSpinnerController implements AdapterView.OnItemSelectedListener
 
 
 
+
+
     }
 
     public void onNothingSelected(AdapterView<?> parent) {

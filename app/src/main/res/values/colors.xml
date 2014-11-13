@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="main">#355D3D</color>
+    <color name="accent1">#FFFFFF</color>
+    <color name="accent2">#000000</color>
+
+
+    <color name="main_transparent">#E6355D3D</color>
+    <color name="accent1_transparent">#E6FFFFFF</color>
+
+
+
+</resources>

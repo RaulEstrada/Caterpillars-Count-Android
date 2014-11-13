@@ -13,6 +13,7 @@
         android:paddingBottom="@dimen/activity_vertical_margin"
         android:focusable="true"
         android:focusableInTouchMode="true"
+        android:visibility="visible"
         tools:context=".HomeActivity">
         <LinearLayout
             android:id="@+id/timedate_text_row"
@@ -94,6 +95,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <TextView
+            android:id="@+id/siteinfo_instruction_button"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_toRightOf="@id/siteinfo_text"
+            android:layout_marginTop="24dp"
+            android:layout_below="@id/timedate_picker_row"
+            android:layout_marginLeft="20dp"
+            android:text="@string/question_mark"
+            android:gravity="center"
+            android:onClick="openSiteInfoDialog"
+            android:clickable="true"
+            android:background="@drawable/rounded_button"
+            android:textColor="@color/accent1"/>
+        <TextView
             android:id="@+id/site_text"
             android:text="@string/site"
             android:layout_marginTop="20dp"
@@ -105,6 +120,7 @@
         <Spinner
             android:id="@+id/site_spinner"
             android:layout_below="@id/site_text"
+            android:layout_marginTop="5dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
@@ -120,6 +136,7 @@
         <Spinner
             android:id="@+id/circle_spinner"
             android:layout_below="@id/circle_text"
+            android:layout_marginTop="5dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
@@ -167,9 +184,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
+        <TextView
+            android:id="@+id/orderinfo_instruction_button"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_toRightOf="@id/orderinfo_text"
+            android:layout_marginTop="24dp"
+            android:layout_below="@id/sitenotes_edittext"
+            android:layout_marginLeft="20dp"
+            android:onClick="openOrderInfoDialog"
+            android:clickable="true"
+            android:text="@string/question_mark"
+            android:gravity="center"
+            android:background="@drawable/rounded_button"
+            android:textColor="@color/accent1"/>
+
         <Button
             android:id="@+id/addorder_button"
-            android:layout_toRightOf="@id/orderinfo_text"
+            android:layout_toRightOf="@id/orderinfo_instruction_button"
             android:layout_below="@id/sitenotes_edittext"
             android:background="#355D3D"
             android:layout_marginTop="17dp"
@@ -199,6 +231,22 @@
             android:textColor="#355D3D"
             android:text="@string/plant_info"
             android:layout_below="@id/order_card_fragment"/>
+
+        <TextView
+            android:id="@+id/plantinfo_instruction_button"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_toRightOf="@id/plantinfo_text"
+            android:layout_marginTop="24dp"
+            android:layout_below="@id/order_card_fragment"
+            android:layout_marginLeft="20dp"
+            android:text="@string/question_mark"
+            android:onClick="openPlantInfoDialog"
+            android:clickable="true"
+            android:gravity="center"
+            android:background="@drawable/rounded_button"
+            android:textColor="@color/accent1"/>
+
         <TextView
             android:id="@+id/plantnotes_text"
             android:text="@string/plant_species"
@@ -208,11 +256,23 @@
             android:layout_width="wrap_content"
             android:layout_below="@id/plantinfo_text"
             android:layout_height="wrap_content" />
+
+
+        <Spinner
+            android:id="@+id/plantspecies_spinner"
+            android:layout_below="@id/plantnotes_text"
+            android:layout_marginTop="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+
         <EditText
             android:id="@+id/plantspecies_edittext"
-            android:layout_below="@id/plantnotes_text"
+            android:layout_below="@id/plantspecies_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="5dp"
+            android:visibility="gone"
             android:maxLines="1"
             android:hint="@string/plant_species_hint"
             android:layout_height="wrap_content" />
@@ -243,6 +303,20 @@
             android:textColor="#355D3D"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/leafphoto_instruction_button"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_toRightOf="@id/plantphoto_text"
+            android:layout_marginTop="24dp"
+            android:layout_below="@id/herbivory_spinner"
+            android:layout_marginLeft="20dp"
+            android:text="@string/question_mark"
+            android:onClick="openLeafPhotoDialog"
+            android:clickable="true"
+            android:gravity="center"
+            android:background="@drawable/rounded_button"
+            android:textColor="@color/accent1"/>
         <Button
             android:id="@+id/capture_plant_photo_button"
             android:layout_below="@id/plantphoto_text"
@@ -255,6 +329,7 @@
             android:layout_width="150dp"
             android:layout_height="150dp" />
         <Button
+            android:id="@+id/submit_all"
             android:layout_below="@id/capture_plant_photo_button"
             android:layout_marginTop="20dp"
             android:background="#355D3D"
@@ -264,6 +339,77 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <!--<Button
+            android:layout_below="@id/submit_all"
+            android:layout_width="wrap_content"
+            android:onClick="ftpUploadImages"
+            android:layout_height="wrap_content"
+            android:text="ftp"/>
+        <Button
+            android:layout_below="@id/submit_all"
+            android:layout_width="wrap_content"
+            android:layout_marginLeft="120dp"
+            android:onClick="notificationData"
+            android:layout_height="wrap_content"
+            android:text="data"/>
+
+        <Button
+            android:layout_below="@id/submit_all"
+            android:layout_width="wrap_content"
+            android:layout_marginLeft="190dp"
+            android:onClick="notificationFailure"
+            android:layout_height="wrap_content"
+            android:text="failure"/>
+
+        <Button
+            android:layout_below="@id/submit_all"
+            android:layout_width="wrap_content"
+            android:layout_marginLeft="240dp"
+            android:onClick="notificationComplete"
+            android:layout_height="wrap_content"
+            android:text="complete"/>
+
+
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/main_transparent"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:paddingTop="@dimen/activity_vertical_margin"
+            android:paddingBottom="@dimen/activity_vertical_margin"
+            android:visibility="visible">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="22dp"
+                    android:textColor="@color/accent1_transparent"
+                    android:text="Uploading..."/>
+
+                <ProgressBar
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+                <TextView
+                    android:textSize="18dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Image 1 of 3 - 58%"
+                    android:textColor="@color/accent1_transparent"/>
+
+            </LinearLayout>
+
+
+        </RelativeLayout>-->
+
 
     </RelativeLayout>
+
+
 </ScrollView>

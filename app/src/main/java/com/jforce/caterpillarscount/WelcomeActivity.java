@@ -2,9 +2,11 @@ package com.jforce.caterpillarscount;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,26 +25,44 @@ public class WelcomeActivity extends Activity {
     public final static int REGISTER = 1;
     public final static int LOGIN = 2;
 
+    private SharedPreferences sharedPreferences;
+
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         getActionBar().hide();
         setContentView(R.layout.activity_welcome);
-        revealCenterIcon();
 
-        //Wait 1 second to reveal the rest of the UI
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            public void run() {
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
 
-                revealUI();
+        boolean seenAnimation = sharedPreferences.getBoolean("seenAnimation", false);
 
-            }
-        }, 2000);
+        if(!seenAnimation) {
+
+            revealCenterIcon(true);
+
+            //Wait 2 seconds to reveal the rest of the UI
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                public void run() {
+
+                    revealUI(true);
+
+                }
+            }, 2000);
+            editor.putBoolean("seenAnimation", true);
+            editor.commit();
+
+        }
+        else{
+            revealCenterIcon(false);
+            revealUI(false);
+        }
 
     }
 
-    public void revealCenterIcon(){
+    public void revealCenterIcon(boolean animate){
         TextView title1 = (TextView)findViewById(R.id.textview_welcometitle);
         TextView title2 = (TextView)findViewById(R.id.textview_welcometitle2);
         //set title font
@@ -57,12 +77,18 @@ public class WelcomeActivity extends Activity {
 
         //fade in center icon
         centerIcon.setVisibility(View.VISIBLE);
-        YoYo.with(Techniques.FadeIn)
-                .playOn(centerIcon);
+
+        if(animate){
+            YoYo.with(Techniques.FadeIn)
+                    .playOn(centerIcon);
+
+        }
+
+
 
     }
 
-    public void revealUI(){
+    public void revealUI(boolean animate){
         TextView title1 = (TextView)findViewById(R.id.textview_welcometitle);
         TextView title2 = (TextView)findViewById(R.id.textview_welcometitle2);
         Button loginButton = (Button)findViewById(R.id.button_welcome_signin);
@@ -72,24 +98,36 @@ public class WelcomeActivity extends Activity {
 
 
         title1.setVisibility(View.VISIBLE);
-        YoYo.with(Techniques.FadeIn)
-                .playOn(title1);
+
 
         title2.setVisibility(View.VISIBLE);
-        YoYo.with(Techniques.FadeIn)
-                .playOn(title2);
+
 
         loginButton.setVisibility(View.VISIBLE);
-        YoYo.with(Techniques.FadeIn)
-                .playOn(loginButton);
+
 
         registerButton.setVisibility(View.VISIBLE);
-        YoYo.with(Techniques.FadeIn)
-                .playOn(registerButton);
+
 
         privacy.setVisibility(View.VISIBLE);
-        YoYo.with(Techniques.FadeIn)
-                .playOn(privacy);
+
+        if(animate) {
+
+            YoYo.with(Techniques.FadeIn)
+                    .playOn(title1);
+
+            YoYo.with(Techniques.FadeIn)
+                    .playOn(title2);
+
+            YoYo.with(Techniques.FadeIn)
+                    .playOn(loginButton);
+
+            YoYo.with(Techniques.FadeIn)
+                    .playOn(registerButton);
+
+            YoYo.with(Techniques.FadeIn)
+                    .playOn(privacy);
+        }
 
 
     }

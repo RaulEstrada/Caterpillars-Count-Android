@@ -1,13 +1,27 @@
 package com.jforce.caterpillarscount;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.NotificationManager;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Environment;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,22 +34,47 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
+import com.daimajia.androidanimations.library.Techniques;
+import com.daimajia.androidanimations.library.YoYo;
 import com.doomonafireball.betterpickers.calendardatepicker.CalendarDatePickerDialog;
 import com.doomonafireball.betterpickers.radialtimepicker.RadialPickerLayout;
 import com.doomonafireball.betterpickers.radialtimepicker.RadialTimePickerDialog;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
+import java.util.Scanner;
 import java.util.TimeZone;
 
 import it.gmariotti.cardslib.library.internal.Card;
 import it.gmariotti.cardslib.library.internal.CardArrayAdapter;
 import it.gmariotti.cardslib.library.view.CardListView;
-import com.jforce.caterpillarscount.R;
+
+//import org.apache.commons.net.ftp.FTP;
+//import org.apache.commons.net.ftp.FTPClient;
+//import org.apache.commons.net.io.CopyStreamAdapter;
+
+import it.sauronsoftware.ftp4j.FTPClient;
+import it.sauronsoftware.ftp4j.FTPDataTransferListener;
+
+import org.apache.http.Header;
+import org.apache.http.entity.StringEntity;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 public class HomeActivity extends FragmentActivity implements RadialTimePickerDialog.OnTimeSetListener{
@@ -53,7 +92,26 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     private SharedPreferences sharedPreferences;
     private Bundle picBundle;
 
+    private String surveyPhotoName;
+    private ArrayList<String> orderPhotoNames;
+
+
+    private String time24hrFormat;
+    private String dateLongFormat;
+
+    private ProgressDialog uploadMetaDataProgressDialog;
+    private ProgressDialog uploadImagesProgressDialog;
+
+    public final int NOTIFICATION_ID = 1;
+
+    boolean uploadSuccess = false;
+
     final int REQUEST_IMAGE_CAPTURE = 5;
+
+    private String mCurrentPhotoPath;
+    private String mLastPhotoPath;
+    private boolean hasPhoto;
+    private boolean speciesEditTextIsVisible;
 
 
 
@@ -62,7 +120,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         super.onCreate(savedInstanceState);
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+
 
         boolean loggedIn = sharedPreferences.getBoolean("loggedIn", false);
 
@@ -73,7 +131,8 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
             setContentView(R.layout.activity_home);
             populateSpinners();
             populateDateAndTime();
-            initCards();
+            init();
+
         }
 
 
@@ -83,6 +142,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         Intent intent = new Intent(this, WelcomeActivity.class);
         //disables activity start animation
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        //intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         finish();
         startActivity(intent);
         //disables activity finish animation
@@ -92,7 +152,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     /**** Method for Setting the Height of the ListView dynamically.
      **** Hack to fix the issue of not showing all the items of the ListView
      **** when placed inside a ScrollView  ****/
-    public static void setListViewHeightBasedOnChildren(ListView listView) {
+    public static void setListViewHeightBasedOnChildren(ListView listView, Context c) {
         ListAdapter listAdapter = listView.getAdapter();
         if (listAdapter == null)
             return;
@@ -107,9 +167,23 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
 
             view.measure(desiredWidth, View.MeasureSpec.UNSPECIFIED);
             totalHeight += view.getMeasuredHeight();
+            //totalHeight += view.getMeasuredHeight() + 50;
         }
         ViewGroup.LayoutParams params = listView.getLayoutParams();
-        params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
+        //params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
+//        Toast toast = Toast.makeText(c, "Divider height: " + listView.getDividerHeight(), Toast.LENGTH_SHORT);
+//        toast.setGravity(Gravity.CENTER, 0, 0);
+//        toast.show();
+        //listview.getDividerHeigt() was yielding 0, so I hardcoded it so bottoms of cards
+        //don't get cut off
+
+        if((listAdapter.getCount() - 1) == 0){
+            params.height = totalHeight + 50;
+        }
+        else{
+            params.height = totalHeight + (100 * (listAdapter.getCount() - 1));
+        }
+
         listView.setLayoutParams(params);
         listView.requestLayout();
     }
@@ -131,12 +205,19 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_logout) {
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean("loggedIn", false);
-            editor.commit();
-            firstTimeSetup();
+            logout();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void logout(){
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("loggedIn", false);
+        editor.putBoolean("seenAnimation", false);
+        editor.commit();
+        firstTimeSetup();
+
     }
 
 
@@ -153,6 +234,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         spinner0.setAdapter(adapter0);
 
         spinner0.setOnItemSelectedListener(new TemperatureSpinnerController());
+        spinner0.setSelection(3);
 
 
 
@@ -166,7 +248,6 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         spinner1.setAdapter(adapter1);
 
         spinner1.setOnItemSelectedListener(new SiteSpinnerController());
-
 
         Spinner spinner2 = (Spinner) findViewById(R.id.circle_spinner);
         // Create an ArrayAdapter using the string array and a default spinner layout
@@ -186,29 +267,40 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         // Apply the adapter to the spinner
         spinner3.setAdapter(adapter3);
 
-        Spinner spinner4 = (Spinner) findViewById(R.id.herbivory_spinner);
+
+        populateSpeciesSpinnerByState("NC");
+
+
+
+        Spinner spinner5 = (Spinner) findViewById(R.id.herbivory_spinner);
         // Create an ArrayAdapter using the string array and a default spinner layout
-        ArrayAdapter<CharSequence> adapter4 = ArrayAdapter.createFromResource(this,
-                R.array.herbivory_array, android.R.layout.simple_spinner_item);
+//        ArrayAdapter<CharSequence> adapter5 = ArrayAdapter.createFromResource(this,
+//                R.array.herbivory_array, android.R.layout.simple_spinner_item);
+
+        //HerbivorySpinnerAdapter adapter5 = new HerbivorySpinnerAdapter(this);
         // Specify the layout to use when the list of choices appears
-        adapter4.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        //adapter5.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Apply the adapter to the spinner
-        spinner4.setAdapter(adapter4);
+        spinner5.setAdapter(new HerbivorySpinnerAdapter(this));
 
     }
 
     public void populateDateAndTime(){
 
         Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
-        SimpleDateFormat timeFormat = new SimpleDateFormat("KK:mm a");
+        SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a");
+        SimpleDateFormat timeFormatLong = new SimpleDateFormat("kk:mm:ss");
         String time = timeFormat.format(calendar.getTime());
+        time24hrFormat = timeFormatLong.format(calendar.getTime());
         EditText timeET = (EditText) findViewById(R.id.time_picker_edittext);
         timeET.setText(time);
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy");
+        SimpleDateFormat dateFormatLong = new SimpleDateFormat("yyyy-MM-dd");
         String date = dateFormat.format(calendar.getTime());
+        dateLongFormat = dateFormatLong.format(calendar.getTime());
         EditText dateET = (EditText) findViewById(R.id.date_picker_edittext);
-        dateET.setText(reformatDateLong(date));
+        dateET.setText(date);
 
     }
 
@@ -281,70 +373,72 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     @Override
     public void onTimeSet(RadialPickerLayout layout, int hourOfDay, int minute) {
 
-        //Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
-        //calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
-        //calendar.set(Calendar.MINUTE, minute);
+        Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
+        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+        calendar.set(Calendar.MINUTE, minute);
 
-        //SimpleDateFormat timeFormat = new SimpleDateFormat("KK:mm a");
-        //String time = timeFormat.format(calendar.getTime());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a");
+        String time = timeFormat.format(calendar.getTime());
+        SimpleDateFormat timeFormatLong = new SimpleDateFormat("kk:mm:ss");
+        time24hrFormat = timeFormatLong.format(calendar.getTime());
 
         EditText timeET = (EditText) findViewById(R.id.time_picker_edittext);
 
 
-        //timeET.setText(time);
-
-
-        if(hourOfDay > 12){
-            if (minute >= 10) {
-
-                timeET.setText((hourOfDay-12) + ":" + minute + " PM");
-
-            }
-            else{
-
-                timeET.setText((hourOfDay-12) + ":" + "0" + minute + " PM");
-
-            }
-        }
-        else if (hourOfDay == 12){
-            if (minute >= 10) {
-
-                timeET.setText(hourOfDay + ":" + minute + " PM");
-
-            }
-            else{
-
-                timeET.setText(hourOfDay + ":" + "0" + minute + " PM");
-
-            }
-
-
-        }
-        else if (hourOfDay == 0){
-            if (minute >= 10) {
-
-                timeET.setText(12 + ":" + minute + " AM");
-
-            }
-            else{
-
-                timeET.setText(12 + ":" + "0" + minute + " AM");
-
-            }
-        }
-        else{
-
-            if (minute >= 10) {
-
-                timeET.setText(hourOfDay + ":" + minute + " AM");
-
-            }
-            else{
-
-                timeET.setText(hourOfDay + ":" + "0" + minute + " AM");
-
-            }
-        }
+        timeET.setText(time);
+//
+//
+//        if(hourOfDay > 12){
+//            if (minute >= 10) {
+//
+//                timeET.setText((hourOfDay-12) + ":" + minute + " PM");
+//
+//            }
+//            else{
+//
+//                timeET.setText((hourOfDay-12) + ":" + "0" + minute + " PM");
+//
+//            }
+//        }
+//        else if (hourOfDay == 12){
+//            if (minute >= 10) {
+//
+//                timeET.setText(hourOfDay + ":" + minute + " PM");
+//
+//            }
+//            else{
+//
+//                timeET.setText(hourOfDay + ":" + "0" + minute + " PM");
+//
+//            }
+//
+//
+//        }
+//        else if (hourOfDay == 0){
+//            if (minute >= 10) {
+//
+//                timeET.setText(12 + ":" + minute + " AM");
+//
+//            }
+//            else{
+//
+//                timeET.setText(12 + ":" + "0" + minute + " AM");
+//
+//            }
+//        }
+//        else{
+//
+//            if (minute >= 10) {
+//
+//                timeET.setText(hourOfDay + ":" + minute + " AM");
+//
+//            }
+//            else{
+//
+//                timeET.setText(hourOfDay + ":" + "0" + minute + " AM");
+//
+//            }
+//        }
 
     }
 
@@ -352,10 +446,6 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
 
         if (requestCode == 1) {
             if(resultCode == RESULT_OK){
-
-
-                String order = data.getStringExtra("order");
-
 
                 if(cardCount == 0){
                     LinearLayout layout = (LinearLayout) findViewById(R.id.cards_linear_layout);
@@ -375,7 +465,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
                 mCardArrayAdapter.notifyDataSetChanged();
 
                 ListView cardList = (ListView) findViewById(R.id.myList);
-                setListViewHeightBasedOnChildren(cardList);
+                setListViewHeightBasedOnChildren(cardList, this);
 
 
 //                Toast toast = Toast.makeText(this, "Adapter count: " + mCardArrayAdapter.getCount(), Toast.LENGTH_SHORT);
@@ -388,21 +478,68 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
             }
         }
 
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            setPicBundle(extras);
-            BitmapDrawable drawable = new BitmapDrawable(this.getResources(), imageBitmap);
-            Button button = (Button) findViewById(R.id.capture_plant_photo_button);
-            button.setText("");
+        if (requestCode == REQUEST_IMAGE_CAPTURE) {
 
-            button.setBackgroundDrawable(drawable);
+            if (resultCode == RESULT_OK) {
+                hasPhoto = true;
+
+
+                galleryAddPic();
+
+
+                Button button = (Button) findViewById(R.id.capture_plant_photo_button);
+
+
+                // Get the dimensions of the View
+                int targetW = button.getWidth();
+                int targetH = button.getHeight();
+
+                // Get the dimensions of the bitmap
+                BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+                bmOptions.inJustDecodeBounds = true;
+                bmOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+                int photoW = bmOptions.outWidth;
+                int photoH = bmOptions.outHeight;
+
+                // Determine how much to scale down the image
+                int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+
+                // Decode the image file into a Bitmap sized to fill the View
+                bmOptions.inJustDecodeBounds = false;
+                bmOptions.inSampleSize = scaleFactor;
+                bmOptions.inPurgeable = true;
+
+                Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+
+                bitmap = OrderActivity.rotateBitmap(bitmap, 90);
+
+                BitmapDrawable drawable = new BitmapDrawable(this.getResources(), bitmap);
+
+
+                button.setText("");
+
+                button.setBackgroundDrawable(drawable);
+            }
+            else{
+
+                File file = new File(mCurrentPhotoPath);
+                file.delete();
+
+                if(hasPhoto){
+                    mCurrentPhotoPath = mLastPhotoPath;
+                }
+                else{
+                    mCurrentPhotoPath = null;
+                }
+
+            }
         }
 
 
     }
 
-    public void initCards(){
+    public void init(){
         cardCount = 0;
         cards = new ArrayList<Card>();
         mCardArrayAdapter = new CardArrayAdapter(this,cards);
@@ -411,6 +548,14 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
             listView.setAdapter(mCardArrayAdapter);
         }
         mCardArrayAdapter.setEnableUndo(true);
+
+        orderPhotoNames = new ArrayList<String>();
+
+        uploadSuccess = false;
+
+        hasPhoto = false;
+
+        speciesEditTextIsVisible = false;
 
 
     }
@@ -442,9 +587,57 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
 
     public void takePicture(View view) {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            // Create the File where the photo should go
+            File photoFile = null;
+
+
+            try {
+                photoFile = createImageFile();
+
+            } catch (IOException ex) {
+
+                Toast toast = Toast.makeText(this, "Error creating file", Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
+                        Uri.fromFile(photoFile));
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            }
         }
+    }
+
+    public File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mLastPhotoPath = mCurrentPhotoPath;
+        mCurrentPhotoPath = image.getAbsolutePath();
+
+        return image;
+    }
+
+
+    private void galleryAddPic() {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        File f = new File(mCurrentPhotoPath);
+        Uri contentUri = Uri.fromFile(f);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
     }
 
     public Bundle getPicBundle() {
@@ -455,22 +648,834 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         this.picBundle = pic;
     }
 
+    public void setDateLongFormat(String dateLongFormat) {
+        this.dateLongFormat = dateLongFormat;
+    }
 
-    public void submit(View view){
+    public void setTime24hrFormat(String time24hrFormat) {
+        this.time24hrFormat = time24hrFormat;
+    }
 
-        String email = sharedPreferences.getString("email", null);
+    public ArrayList<String> getOrderPhotoNames() {
+        return orderPhotoNames;
+    }
+
+    public void setOrderPhotoNames(ArrayList<String> orderPhotoNames) {
+        this.orderPhotoNames = orderPhotoNames;
+    }
+
+    public String getSurveyPhotoName() {
+        return surveyPhotoName;
+    }
+
+    public void setSurveyPhotoName(String surveyPhotoName) {
+        this.surveyPhotoName = surveyPhotoName;
+    }
+
+    public void submit(View view) throws JSONException, UnsupportedEncodingException {
 
 
-        
+
+//        uploadMetaDataProgressDialog = getUploadMetaDataProgressDialog().show(this, "Uploading Data", "Please wait...");
+//        uploadMetaDataProgressDialog.setCancelable(true);
+
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+
+        String email1 = sharedPreferences.getString("email", null);
+
+        int length = email1.length();
+
+
+        String substring = email1.substring(length - 7, length);
+
+        if(!substring.equals("unc.edu")){
+            Toast toast1 = Toast.makeText(this, "Only unc.edu email addresses may enter data at this time", Toast.LENGTH_SHORT);
+            toast1.setGravity(Gravity.CENTER, 0, 0);
+            toast1.show();
+            return;
+
+        }
 
 
 
 
-        Spinner spinner1 = (Spinner) findViewById(R.id.site_spinner);
 
-        int siteID = spinner1.getSelectedItemPosition();
+        if(!hasPhoto){
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+            Toast toast1 = Toast.makeText(this, "Leaf Photo is required", Toast.LENGTH_SHORT);
+            toast1.setGravity(Gravity.CENTER, 0, 0);
+            toast1.show();
+
+            YoYo.with(Techniques.Shake).playOn(findViewById(R.id.capture_plant_photo_button));
+
+            return;
+
+
+
+        }
+
+
+
+        notificationStart();
+
+        //clear old photo name values
+        surveyPhotoName = null;
+        orderPhotoNames.clear();
+
+
+        Toast toast1 = Toast.makeText(this, "Starting Upload...", Toast.LENGTH_SHORT);
+        toast1.setGravity(Gravity.CENTER, 0, 0);
+        toast1.show();
+
+
+
+        //First check that user is still valid and hasn't been invalidated by an admin
+        String email = sharedPreferences.getString("email", "");
+
+        if(email.equals("")){
+
+            //getUploadMetaDataProgressDialog().dismiss();
+            notificationFailure();
+            Toast toast = Toast.makeText(this, "Internal error: please log out and log back in", Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
+        }
+
+        //construct the JSON object to be POSTed
+        JSONObject jsonParams = new JSONObject();
+        jsonParams.put("email", email);
+        StringEntity entity = new StringEntity(jsonParams.toString());
+
+
+        SubmitValidResponseHandler handler = new SubmitValidResponseHandler(this);
+
+        RestClient.postJson(this, "users.php", entity, "application/json", handler);
+
+    }
+
+    public void submitSurvey() throws JSONException, UnsupportedEncodingException{
+
+
+
+
+        //then submit the survey
+
+        //construct the JSON object to be POSTed
+        JSONObject jsonParams = new JSONObject();
+        String type = "survey";
+        jsonParams.put("type",type);
+        //Log.d("caterpillars", type);
+
+        //siteID
+        Spinner siteSpinner = (Spinner) findViewById(R.id.site_spinner);
+        int siteID = siteSpinner.getSelectedItemPosition();
+        jsonParams.put("siteID", 18);
+        //Log.d("caterpillars", Integer.toString(siteID + 3));
+
+
+        //userID
+        int userID = sharedPreferences.getInt("userID", -1);
+        if(userID == -1){
+            //getUploadMetaDataProgressDialog().dismiss();
+            notificationFailure();
+            Toast toast = Toast.makeText(this, "Internal error: please log out and log back in", Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
+            return;
+        }
+        jsonParams.put("userID", userID);
+        //Log.d("caterpillars", Integer.toString(userID));
+
+        //circle
+
+        Spinner circleSpinner = (Spinner) findViewById(R.id.circle_spinner);
+        int circle = circleSpinner.getSelectedItemPosition() + 1;
+        jsonParams.put("circle", circle);
+        //Log.d("caterpillars", Integer.toString(circle));
+
+        //survey
+        Spinner surveySpinner = (Spinner) findViewById(R.id.survey_spinner);
+        String survey = (String) surveySpinner.getSelectedItem();
+        jsonParams.put("survey", survey);
+        //Log.d("caterpillars", survey);
+
+        //timeStart
+
+        String timeStart = dateLongFormat + " " + time24hrFormat;
+        jsonParams.put("timeStart", timeStart);
+        //Log.d("caterpillars", timeStart);
+
+        //temperatureMin
+        Spinner tempSpinner = (Spinner) findViewById(R.id.temp_spinner);
+        int tempIndex = tempSpinner.getSelectedItemPosition();
+        int[] minArray = getResources().getIntArray(R.array.temp_array_min);
+        int temperatureMin = minArray[tempIndex];
+        jsonParams.put("temperatureMin", temperatureMin);
+        //Log.d("caterpillars", Integer.toString(temperatureMin));
+
+        //temperatureMax
+
+        int[] maxArray = getResources().getIntArray(R.array.temp_array_max);
+        int temperatureMax = maxArray[tempIndex];
+        jsonParams.put("temperatureMax", temperatureMax);
+        Log.d("caterpillars", Integer.toString(temperatureMax));
+
+        //siteNotes
+
+        EditText siteNotesET = (EditText) findViewById(R.id.sitenotes_edittext);
+        String siteNotes = siteNotesET.getText().toString();
+
+        jsonParams.put("siteNotes", siteNotes);
+
+
+
+        //Log.d("caterpillars", siteNotes);
+
+        //plantSpecies
+        Spinner plantSpeciesSpinner = (Spinner) findViewById(R.id.plantspecies_spinner);
+        String spinnerItem = (String) plantSpeciesSpinner.getSelectedItem();
+
+        if(spinnerItem.equals("Other")){
+            EditText plantSpeciesET = (EditText) findViewById(R.id.plantspecies_edittext);
+            String plantSpecies = plantSpeciesET.getText().toString();
+            jsonParams.put("plantSpecies", plantSpecies);
+        }
+        else{
+            String plantSpecies = spinnerItem;
+            jsonParams.put("plantSpecies", plantSpecies);
+
+        }
+
+
+        //Log.d("caterpillars", plantSpecies);
+
+        //herbivory
+        Spinner herbivorySpinner = (Spinner) findViewById(R.id.herbivory_spinner);
+        int herbivoryIndex = herbivorySpinner.getSelectedItemPosition();
+        int[] herbivoryVals = getResources().getIntArray(R.array.herbivory_array_values);
+        int herbivory = herbivoryVals[herbivoryIndex];
+        jsonParams.put("herbivory", herbivory);
+        //Log.d("caterpillars", Integer.toString(herbivory));
+
+        //construct the JSON object to be POSTed
+
+        StringEntity entity = new StringEntity(jsonParams.toString());
+        SubmitSurveyResponseHandler handler = new SubmitSurveyResponseHandler(this);
+        RestClient.postJson(this,"submission_full.php",entity,"application/json",handler);
+
+
+    }
+
+    public void submitOrders(int surveyID) throws JSONException{
+
+//        Toast toast = Toast.makeText(this, "Survey submitted with ID" + surveyID, Toast.LENGTH_SHORT);
+//        toast.setGravity(Gravity.CENTER, 0, 0);
+//        toast.show();
+
+
+        if(cards.size() == 0){
+
+            try{
+                ftpUploadImages();
+
+            }
+            catch (Exception e){
+                notificationFailure();
+                Toast toast = Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+                return;
+            }
+
+            notificationImages(null, null, null);
+            return;
+
+        }
+
+        for (int i = 0; i < cards.size(); i++){
+
+            //construct the JSON object to be POSTed
+            JSONObject jsonParams = new JSONObject();
+
+            //type
+            String type = "order";
+            jsonParams.put("type",type);
+            Log.d("caterpillars", type);
+
+
+            //userID
+            int userID = sharedPreferences.getInt("userID", -1);
+            if(userID == -1){
+                //getUploadMetaDataProgressDialog().dismiss();
+                notificationFailure();
+                Toast toast = Toast.makeText(this, "Internal error: please log out and log back in", Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+                return;
+            }
+            jsonParams.put("userID", userID);
+            Log.d("caterpillars", Integer.toString(userID));
+
+
+            //surveyID
+            jsonParams.put("surveyID", surveyID);
+            Log.d("caterpillars", Integer.toString(surveyID));
+
+
+            OrderCard card = (OrderCard) cards.get(i);
+
+
+            //orderArthropod
+            String orderArthropod = card.getOrder();
+            jsonParams.put("orderArthropod", orderArthropod);
+            Log.d("caterpillars", orderArthropod);
+
+            //orderLength
+            int orderLength = card.getLength();
+            jsonParams.put("orderLength", orderLength);
+            Log.d("caterpillars", Integer.toString(orderLength));
+
+            //orderNotes
+            String orderNotes = card.getNotes();
+            jsonParams.put("orderNotes", orderNotes);
+            Log.d("caterpillars", orderNotes);
+
+            //orderCount
+            int orderCount = card.getCount();
+            jsonParams.put("orderCount", orderCount);
+            Log.d("orderCount", Integer.toString(orderCount));
+
+            StringEntity entity;
+            try {
+                entity = new StringEntity(jsonParams.toString());
+            }
+            catch (Exception e){
+                //getUploadMetaDataProgressDialog().dismiss();
+                notificationFailure();
+                Toast toast = Toast.makeText(this, "Internal error: please retry", Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+                return;
+            }
+            SubmitOrderResponseHandler handler = new SubmitOrderResponseHandler(this, cards.size(), i);
+            RestClient.postJson(this,"submission_full.php",entity,"application/json",handler);
+
+
+        }
+
+    }
+
+    public void setUploadSuccess(boolean uploadSuccess) {
+        this.uploadSuccess = uploadSuccess;
+    }
+
+    public ProgressDialog getUploadMetaDataProgressDialog() {
+        return uploadMetaDataProgressDialog;
+    }
+
+    public ProgressDialog getUploadImagesProgressDialog(){
+        return uploadImagesProgressDialog;
+    }
+
+    public void openSiteInfoDialog(View view){
+
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        //builder.setTitle("Site Information");
+        builder.setCustomTitle(getLayoutInflater().inflate(R.layout.dialog_site_info_title, null));
+        builder.setMessage("Enter the Site, Circle, and Survey associated with where you are currently recording data.\n\n" +
+                "Enter any notes that you may deem relevant to data reviewers");
+        builder.setCancelable(true)
+//                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//                    public void onClick(DialogInterface dialog, int id) {
+//                        //MyActivity.this.finish();
+//                    }
+//                })
+                .setNegativeButton("Got it!", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+                });
+
+        AlertDialog alertdialog = builder.create();
+        alertdialog.show();
+
+    }
+
+    public void openOrderInfoDialog(View view){
+
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        //builder.setTitle("Arthropod Order Info");
+        builder.setCustomTitle(getLayoutInflater().inflate(R.layout.dialog_order_info_title, null));
+        builder.setMessage("Add a record for each Arthropod Order that you see, estimating its length in mm " +
+                "and noting how many you saw.\n\n" +
+                "If necessary, submit observations for an Order using multiple records " +
+                "(e.g., you saw 10 ants of size 4 mm, and 3 ants of size 12 mm).\n\n" +
+                "You can add multiple Arthropod Orders to each submission.");
+        builder.setCancelable(true)
+//                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//                    public void onClick(DialogInterface dialog, int id) {
+//                        //MyActivity.this.finish();
+//                    }
+//                })
+                .setNegativeButton("Got it!", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+                });
+
+        AlertDialog alertdialog = builder.create();
+        alertdialog.show();
+
+    }
+
+    public void openPlantInfoDialog(View view){
+
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        //builder.setTitle("Plant Infomation");
+        builder.setMessage("Select the name of the plant species that you surveyed from the drop-down menu below. " +
+                "If the desired plant species does not appear in the list, select " +
+                "'Other' and enter the plant species manually into the text field that appears.\n\n" +
+                "Choose the herbivory score that best characterizes the average level of herbivory across all leaves examined in the survey.");
+        //builder.setView(getLayoutInflater().inflate(R.layout.dialog_leaf_photo, null));
+        builder.setCustomTitle(getLayoutInflater().inflate(R.layout.dialog_plant_info_title, null));
+        builder.setCancelable(true)
+//                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//                    public void onClick(DialogInterface dialog, int id) {
+//                        //MyActivity.this.finish();
+//                    }
+//                })
+                .setNegativeButton("Got it!", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+                });
+
+        AlertDialog alertdialog = builder.create();
+        alertdialog.show();
+
+    }
+
+
+    public void openLeafPhotoDialog(View view){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        //builder.setTitle("Plant Infomation");
+        builder.setView(getLayoutInflater().inflate(R.layout.dialog_leaf_photo, null));
+        builder.setCustomTitle(getLayoutInflater().inflate(R.layout.dialog_leaf_photo_title, null));
+        builder.setCancelable(true)
+//                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//                    public void onClick(DialogInterface dialog, int id) {
+//                        //MyActivity.this.finish();
+//                    }
+//                })
+                .setNegativeButton("Got it!", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+                });
+
+        AlertDialog alertdialog = builder.create();
+        alertdialog.show();
+
+
+
+
+
+    }
+
+
+
+    public void postImage(View view) throws FileNotFoundException{
+        RequestParams params = new RequestParams();
+        OrderCard card = (OrderCard) cards.get(0);
+        params.put("image", new File(card.getPhotoPath()));
+        RestClient.postFile(this, "uploads.php", params, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int code, Header[] h, byte[] b) {
+                Log.w("boogieman", "success!!!!");
+                Log.w("boogieman", b.toString());
+                Log.w("boogieman", Integer.toString(code));
+            }
+            @Override
+            public void onFailure(int code, Header[] h, byte[] b, Throwable t) {
+                Log.w("boogieman", "failure!!!!");
+                Log.w("boogieman", b.toString());
+                Log.w("boogieman", Integer.toString(code));
+
+            }
+
+        });
+    }
+
+    public void ftpUploadImages() throws IOException{
+
+
+
+        new UploadImagesTask(this).execute();
+
+
+    }
+
+    public class UploadImagesTask extends AsyncTask<Void, Integer, Boolean> {
+
+        boolean exception;
+        Activity activity;
+
+        public UploadImagesTask(Activity activity){
+            this.activity = activity;
+            exception = false;
+
+
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... v) {
+
+
+
+
+
+            //establish connection
+
+            //FTPClient ftpClient = new FTPClient();
+            FTPClient ftpClient = new FTPClient();
+            try {
+                //ftpClient.connect(InetAddress.getByName("pocketprotection.org"));
+                ftpClient.connect("pocketprotection.org");
+            }
+            catch (Exception e){
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast toast = Toast.makeText(activity, "Error finding server", Toast.LENGTH_SHORT);
+                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        toast.show();
+
+                    }
+                });
+
+                return false;
+
+
+            }
+
+            try {
+                ftpClient.login("caterpillars@pocketprotection.org", "password123");
+
+            }
+            catch (Exception e){
+
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast toast = Toast.makeText(activity, "Error connecting to server", Toast.LENGTH_SHORT);
+                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        toast.show();
+                    }
+                });
+                return false;
+            }
+
+
+
+            ArrayList<Card> cardsWithPics = new ArrayList<Card>();
+            for(Card c : cards){
+                OrderCard oc = (OrderCard) c;
+                if(oc.containsPic()){
+                    cardsWithPics.add(oc);
+                }
+            }
+
+
+
+            for(int i = 0; i <  cardsWithPics.size() + 1; i++){
+
+                final File file;
+
+                //get the file
+
+                if(i == 0){
+                    file = new File(mCurrentPhotoPath);
+                }
+                else{
+                    OrderCard card = (OrderCard) cardsWithPics.get(i-1);
+
+                    file = new File(card.getPhotoPath());
+
+                }
+
+
+
+
+                try {
+                    //ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+                    ftpClient.setType(FTPClient.TYPE_BINARY);
+                }
+                catch (Exception e){
+                    Toast toast = Toast.makeText(activity, "Error getting files ready", Toast.LENGTH_SHORT);
+                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    toast.show();
+
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            Toast toast = Toast.makeText(activity, "Error getting files ready", Toast.LENGTH_SHORT);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                        }
+                    });
+                    return false;
+                }
+
+
+
+
+
+
+
+
+                //BufferedInputStream buffIn;
+
+                try {
+                    //buffIn = new BufferedInputStream(new FileInputStream(file));
+
+                }
+                catch (Exception e){
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            Toast toast = Toast.makeText(activity, "Error getting files ready", Toast.LENGTH_SHORT);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                        }
+                    });
+
+
+
+                    return false;
+
+                }
+
+                try {
+
+
+                    //ftpClient.enterLocalPassiveMode();
+                    ftpClient.setPassive(true);
+
+
+
+
+                    //FTPClientProgressListener ftpClientProgressListener = new FTPClientProgressListener(this, file, i + 1, cards.size() + 1);
+
+//                    final Integer current = i + 1;
+//                    final Integer total = cards.size() + 1;
+//
+//                    CopyStreamAdapter streamListener = new CopyStreamAdapter() {
+//
+//                        @Override
+//                        public void bytesTransferred(long totalBytesTransferred, int bytesTransferred, long streamSize) {
+//                            //this method will be called everytime some bytes are transferred
+//
+//                            int percent = (int)(totalBytesTransferred*100/file.length());
+//                            // update your progress bar with this percentage
+//                            publishProgress(percent, current, total);
+//                        }
+//
+//
+//                    };
+
+
+                    //ftpClient.setCopyStreamListener(ftpClientProgressListener);
+                    //ftpClient.setCopyStreamListener(streamListener);
+
+
+                    //publishProgress(5, i+1, cards.size() + 1);
+
+
+                    if(i == 0) {
+                        //trimDomainPrefix(surveyPhotoName)
+                        //"test" + i + ".jpg"
+
+                        //Set the FTPClient listener to show progress
+
+
+
+                        //ftpClient.storeFile(trimDomainPrefix(surveyPhotoName), buffIn);
+                        ftpClient.upload(file, new MyTransferListener(this, file, i + 1, cardsWithPics.size() + 1));
+                        ftpClient.rename(trimAbsolutePath(mCurrentPhotoPath), trimDomainPrefix(surveyPhotoName));
+
+                    }
+                    else{
+
+                        //trimDomainPrefix(orderPhotoNames.get(i - 1))
+                        //ftpClient.storeFile(trimDomainPrefix(orderPhotoNames.get(i - 1)), buffIn);
+
+                        ftpClient.upload(file, new MyTransferListener(this, file, i + 1, cardsWithPics.size() + 1));
+                        OrderCard card = (OrderCard) cardsWithPics.get(i-1);
+                        ftpClient.rename(trimAbsolutePath(card.getPhotoPath()), trimDomainPrefix(orderPhotoNames.get(i - 1)));
+
+
+                    }
+                    //buffIn.close();
+
+                }
+                catch (Exception e){
+
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            Toast toast = Toast.makeText(activity, "Error uploading image", Toast.LENGTH_SHORT);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                        }
+                    });
+
+                    return false;
+
+                }
+
+            }
+
+
+
+            try {
+                //ftpClient.logout();
+                //ftpClient.disconnect();
+                ftpClient.disconnect(true);
+            }
+            catch (Exception e){
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast toast = Toast.makeText(activity, "Error disconnecting from server", Toast.LENGTH_SHORT);
+                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        toast.show();
+                    }
+                });
+
+                return false;
+
+
+            }
+
+
+            return true;
+
+        }
+
+        public void myPublishProgress(Integer... progress){
+            publishProgress(progress[0], progress[1], progress[2]);
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            notificationImages(progress[0], progress[1], progress[2]);
+        }
+
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+
+
+
+            if(result){
+                notificationComplete();
+                Toast toast = Toast.makeText(activity, "Upload complete!", Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+
+
+            }
+            else{
+                notificationFailure();
+
+//                Toast toast = Toast.makeText(activity, "Upload failed", Toast.LENGTH_SHORT);
+//                toast.setGravity(Gravity.CENTER, 0, 0);
+//                toast.show();
+
+            }
+
+
+        }
+    }
+
+    public void notificationStart(){
+
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_stat_file_file_upload)
+                        .setContentTitle("Verifying Credentials")
+                        .setContentText("Please wait...")
+                        .setProgress(0, 0, true)
+                        .setOngoing(true);
+
+        NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // Builds the notification and issues it.
+        mNotifyMgr.notify(this.NOTIFICATION_ID, mBuilder.build());
+
+
+    }
+
+    public void notificationData(){
+
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_stat_file_file_upload)
+                        .setContentTitle("Uploading Data")
+                        .setContentText("Upload is in progress")
+                        .setProgress(0, 0, true)
+                        .setOngoing(true);
+
+        NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // Builds the notification and issues it.
+        mNotifyMgr.notify(this.NOTIFICATION_ID, mBuilder.build());
+
+
+    }
+
+
+    public void notificationImages(Integer progress, Integer current, Integer total){
+
+//       final Integer progress = progress1;
+//       final Integer current = current1;
+//       final Integer total = total1;
+//       final Activity activity = this;
+
+
+
+
+//        // Start a lengthy operation in a background thread
+//        new Thread(
+//                new Runnable() {
+//                    @Override
+//                    public void run() {
+                        NotificationCompat.Builder mBuilder =
+                                new NotificationCompat.Builder(this)
+                                        .setSmallIcon(R.drawable.ic_stat_file_file_upload)
+                                        .setContentTitle("Uploading Images")
+                                        .setOngoing(true);
+
+                        if(progress != null){
+                            mBuilder.setContentText("Image " + current + " of " + total + " - " + progress + "%")
+                                    .setProgress(100, progress, false);
+
+                        }
+                        else{
+
+                            mBuilder.setContentText("Getting files ready")
+                                    .setProgress(0, 0, true);
+
+                        }
+
+                        NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                        // Builds the notification and issues it.
+                        mNotifyMgr.notify(NOTIFICATION_ID, mBuilder.build());
+//                    }
+//                }
+//                // Starts the thread by calling the run() method in its Runnable
+//        ).start();
+
+
 
 
 
@@ -480,5 +1485,315 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     }
 
 
+    public void notificationFailure(){
+
+
+
+
+
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_stat_file_cloud_off)
+                        .setContentTitle("Upload Failed")
+                        .setContentText("Tap to retry")
+                        .setProgress(0, 0, false)
+                        .setOngoing(false);
+
+        NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // Builds the notification and issues it.
+        mNotifyMgr.notify(this.NOTIFICATION_ID, mBuilder.build());
+
+    }
+
+    public void notificationComplete(){
+
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_stat_file_cloud_done)
+                        .setContentTitle("Upload complete")
+                        .setContentText("Thank you for your submission!")
+                        .setProgress(0, 0, false)
+                        .setOngoing(false);
+
+        NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // Builds the notification and issues it.
+        mNotifyMgr.notify(this.NOTIFICATION_ID, mBuilder.build());
+
+    }
+
+    public String trimDomainPrefix(String string){
+
+
+        final int trimLength = "domain/".length();
+
+        return string.substring(trimLength);
+
+
+
+    }
+
+    public String trimAbsolutePath(String string){
+
+        String[] parts = string.split("/");
+
+        int length = parts.length;
+
+        return parts[length - 1];
+
+    }
+
+
+
+
+    public class MyTransferListener implements FTPDataTransferListener {
+
+        private UploadImagesTask task;
+        private File file;
+        private Integer current;
+        private Integer total;
+
+
+        private long transferred;
+        private long fileLength;
+
+        public MyTransferListener(UploadImagesTask task, File file, Integer current, Integer total){
+
+            this.task = task;
+            this.file = file;
+            this.current = current;
+            this.total = total;
+
+
+            fileLength = file.length();
+
+        }
+
+        public void started() {
+            // Transfer started
+        }
+
+        public void transferred(int length) {
+            // Yet other length bytes has been transferred since the last time this
+            // method was called
+
+            transferred = transferred + length;
+            int percent = (int)(transferred*100/fileLength);
+            task.myPublishProgress(percent, current, total);
+
+        }
+
+        public void completed() {
+            // Transfer completed
+        }
+
+        public void aborted() {
+            // Transfer aborted
+        }
+
+        public void failed() {
+            // Transfer failed
+        }
+
+    }
+
+
+
+
+    public void populateSpeciesSpinnerByState(String stateCode){
+
+        new ParseSpeciesTask(this, stateCode).execute();
+
+
+    }
+
+
+    public void setSpecies(ArrayList<String> species){
+
+        Spinner spinner4 = (Spinner) findViewById(R.id.plantspecies_spinner);
+        ArrayAdapter<String> adapter4 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
+        adapter4.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        adapter4.addAll(species);
+        adapter4.notifyDataSetChanged();
+        spinner4.setAdapter(adapter4);
+        spinner4.setOnItemSelectedListener(new SpeciesSpinnerController());
+    }
+
+
+
+
+    public class ParseSpeciesTask extends AsyncTask<Void, Integer, Boolean> {
+
+        Activity activity;
+        String stateCode;
+        ArrayList<String> values;
+
+        public ParseSpeciesTask(Activity activity, String stateCode){
+            this.activity = activity;
+            this.stateCode = stateCode;
+            this.values = new ArrayList<String>();
+
+
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... v) {
+
+            InputStream is = getResources().openRawResource(R.raw.cc_tree_species_by_state);
+
+            Scanner scanner = new Scanner(is, "UTF-8");
+
+
+            while(scanner.hasNextLine()){
+                String line = scanner.nextLine();
+
+
+                String[] cells = line.split(",");
+
+                //Log.d("ayylmao", cells[0]);
+
+                String state = cells[0].replace("\"", "");
+                String species = cells[1].replace("\"", "");
+
+                if(stateCode.equals(state)){
+
+                    values.add(species);
+                    //Log.d("ayylmao", cells[1]);
+                }
+
+
+            }
+
+
+
+//            BufferedReader br;
+//            try{
+//                br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+//
+//            }
+//            catch (Exception e){
+//                Toast toast = Toast.makeText(activity, "Something went wrong", Toast.LENGTH_SHORT);
+//                toast.setGravity(Gravity.CENTER, 0, 0);
+//                toast.show();
+//                return false;
+//
+//            }
+//
+//            String line = "";
+//
+//            try {
+//
+//                while ((line = br.readLine()) != null) {
+//
+//                    // use comma as separator
+//                    String[] cells = line.split(",");
+//
+//                    if(stateCode.equals(cells[0])){
+//
+//
+//                        values.add(cells[1]);
+//
+//                    }
+//
+//
+//
+//                }
+//            }
+//            catch (Exception e){
+//                Toast toast = Toast.makeText(activity, "Something went wrong", Toast.LENGTH_SHORT);
+//                toast.setGravity(Gravity.CENTER, 0, 0);
+//                toast.show();
+//                return false;
+//            }finally {
+//                if (br != null) {
+//                    try {
+//                        br.close();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+
+
+
+            return true;
+
+        }
+
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+
+            if(result){
+                HomeActivity homeActivity = (HomeActivity) activity;
+
+                homeActivity.setSpecies(values);
+//                Toast toast = Toast.makeText(activity, "ayy lmao", Toast.LENGTH_SHORT);
+//                toast.setGravity(Gravity.CENTER, 0, 0);
+//                toast.show();
+
+            }
+            else{
+                Toast toast = Toast.makeText(activity, "Something went wrong", Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+            }
+
+
+
+
+        }
+    }
+
+
+    public void showSpeciesEditText(boolean animate){
+
+        EditText et = (EditText) findViewById(R.id.plantspecies_edittext);
+
+        et.setVisibility(View.VISIBLE);
+
+
+        if(animate){
+            YoYo.with(Techniques.FadeIn)
+                    .duration(500)
+                    .playOn(et);
+        }
+
+        speciesEditTextIsVisible = true;
+
+
+    }
+
+    public void hideSpeciesEditText(boolean animate){
+
+        final EditText et = (EditText) findViewById(R.id.plantspecies_edittext);
+
+
+
+
+        if(animate){
+            YoYo.with(Techniques.FadeOut)
+                    .duration(500)
+                    .playOn(et);
+        }
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+
+                et.setVisibility(View.GONE);
+
+            }
+        }, 500);
+
+        speciesEditTextIsVisible = false;
+
+
+
+    }
+
+
+    public boolean speciesEditTextIsVisible() {
+        return speciesEditTextIsVisible;
+    }
 
 }

@@ -2,7 +2,9 @@ package com.jforce.caterpillarscount;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -36,8 +38,8 @@ public class OrderCard extends Card{
     private int length;
     private int count;
     private String notes;
-    private Bitmap pic;
-    private Bundle picBundle;
+    private String photoPath;
+    private boolean containsPic;
 
     private HomeActivity activity;
 
@@ -67,22 +69,20 @@ public class OrderCard extends Card{
      */
     private void init(Context context, Intent data){
 
+        containsPic = false;
+
         activity = (HomeActivity) context;
 
         order = data.getStringExtra("order");
         length = data.getIntExtra("length", 0);
         count = data.getIntExtra("count", 0);
         notes = data.getStringExtra("notes");
-        Bundle extras = data.getExtras();
-        picBundle = extras;
-        pic = (Bitmap) extras.get("data");
 
+        photoPath = data.getStringExtra("photoPath");
 
-//        if(pic == null){
-//            Toast toast = Toast.makeText(getContext(), "ERROR", Toast.LENGTH_LONG);
-//            toast.setGravity(Gravity.CENTER, 0, 0);
-//            toast.show();
-//        }
+        if(photoPath != null){
+            containsPic = true;
+        }
 
 
         //General
@@ -118,39 +118,57 @@ public class OrderCard extends Card{
         //Thumbnail
         CardThumbnail thumb = new CardThumbnail(context);
 
+
         String[] orders = activity.getResources().getStringArray(R.array.order_array);
+        TypedArray orderPics = activity.getResources().obtainTypedArray(R.array.order_array_pics);
 
-        if(order.equals(orders[0])){//Beetles
+        for(int i = 0; i < orders.length; i++) {
 
-            if(pic != null){
 
-                //set pic here
+            if (order.equals(orders[i])) {
 
-                ThumbnailCustomSource thumbCS = new ThumbnailCustomSource(order + activity.getCardCount(), pic);
+                if (containsPic) {
 
-                thumb.setCustomSource(thumbCS);
+
+                    //get the Photo and downscale to 250x250 (default w h of a CardThumbnail)
+
+                    // Get the dimensions of the View
+                    int targetW = 250;
+                    int targetH = 250;
+
+                    // Get the dimensions of the bitmap
+                    BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+                    bmOptions.inJustDecodeBounds = true;
+                    bmOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                    BitmapFactory.decodeFile(photoPath, bmOptions);
+                    int photoW = bmOptions.outWidth;
+                    int photoH = bmOptions.outHeight;
+
+                    // Determine how much to scale down the image
+                    int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+
+                    // Decode the image file into a Bitmap sized to fill the View
+                    bmOptions.inJustDecodeBounds = false;
+                    bmOptions.inSampleSize = scaleFactor;
+                    bmOptions.inPurgeable = true;
+
+                    Bitmap bitmap = BitmapFactory.decodeFile(photoPath, bmOptions);
+
+                    bitmap = OrderActivity.rotateBitmap(bitmap, 90);
+
+                    //set pic here
+                    //TODO:
+                    ThumbnailCustomSource thumbCS = new ThumbnailCustomSource(photoPath, bitmap);
+
+                    thumb.setCustomSource(thumbCS);
+
+                } else {
+                    thumb.setDrawableResource(orderPics.getResourceId(i, -1));
+
+                }
+
+
             }
-            else{
-                thumb.setDrawableResource(R.drawable.beetle);
-            }
-
-
-        }
-        if(order.equals(orders[1])){//Caterpillars
-
-            if(pic != null){
-
-                ThumbnailCustomSource thumbCS = new ThumbnailCustomSource(order + activity.getCardCount(), pic);
-
-                thumb.setCustomSource(thumbCS);
-
-            }
-            else{
-                thumb.setDrawableResource(R.drawable.caterpillar);
-            }
-
-
-
         }
 
         addCardThumbnail(thumb);
@@ -220,7 +238,7 @@ public class OrderCard extends Card{
         activity.getCardList().remove(card);
         activity.getCardArrayAdapter().notifyDataSetChanged();
         ListView cardList = (ListView) activity.findViewById(R.id.myList);
-        activity.setListViewHeightBasedOnChildren(cardList);
+        activity.setListViewHeightBasedOnChildren(cardList, activity);
 
         if (activity.getCardCount() == 0) {
 
@@ -272,20 +290,15 @@ public class OrderCard extends Card{
         this.notes = notes;
     }
 
-    public Bitmap getPic() {
-        return pic;
+    public String getPhotoPath() {
+        return photoPath;
     }
 
-    public void setPic(Bitmap pic) {
-        this.pic = pic;
+    public void setPhotoPath(String photoPath) {
+        this.photoPath = photoPath;
     }
 
-    public Bundle getPicBundle() {
-        return picBundle;
+    public boolean containsPic(){
+        return containsPic;
     }
-
-    public void setPicBundle(Bundle picBundle) {
-        this.picBundle = picBundle;
-    }
-
 }

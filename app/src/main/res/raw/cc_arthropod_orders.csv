@@ -1,0 +1,16 @@
+Order,Info text
+NONE,"If you do a survey and don't find any arthropods, be sure to select NONE!"
+Ants (Formicidae),"Ants have narrow waists and elbowed antennae, are orange, red, brown or black, and can be <1 mm to over 1 cm in length"
+Aphids and Psyllids (Sternorrhyncha),"Aphids and psyllids are small insects, usu <5 mm, feeding on the stems and leaves of plants; green, yellow or white in color"
+"Bees and Wasps (Hymenoptera, excluding ants)",Bees and wasps have two pairs of wings and a narrow waist
+Beetles (Coleoptera),"Beetles have a two-piece, hard outer covering (the elytra) under which they have functional wings"
+Caterpillars (Lepidoptera larvae),The larvae of moths and butterflies may be long and thin like inchworms or squat and fat; they may have hairs or spines
+Daddy longlegs (Opiliones),"Daddy longlegs, or harvestmen, usually have a compact body (<1 cm) with 8 very long legs (although some may be missing)"
+Flies (Diptera),Flies have only one pair of wings
+"Grasshoppers, Crickets (Orthoptera)","Grasshoppers and crickets have long hind legs for jumping, and their antennae have multiple joints"
+Leaf hoppers and Cicadas (Auchenorrhyncha),"Members of this group have a downward pointing ""beak"" for sucking plant juices; their bodies often taper towards the back"
+"Moths, Butterflies (Lepidoptera)","Adult moths and butterflies have wings covered in scales, and a proboscis for sucking nectar"
+Spiders (Araneae; NOT daddy longlegs!),"Spiders have two main body segments, the cephalothorax and abdomen, and eight legs"
+True Bugs (Heteroptera),"The folding of partially transparent wings often makes an X-shape on the back, they often have distinct ""shoulders"""
+OTHER (describe in Notes),"Use this field if you know what the arthropod is, but it is not on the list; describe it in the Notes field"
+UNIDENTIFIED (describe in Notes),Use this field if you don't know what the arthropod is; describe its obvious features in the Notes field

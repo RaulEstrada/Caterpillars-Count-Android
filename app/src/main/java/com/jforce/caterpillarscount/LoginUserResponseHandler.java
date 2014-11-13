@@ -68,17 +68,20 @@ public class LoginUserResponseHandler extends JsonHttpResponseHandler{
 
         //start HomeActivity, finish those below in in the back stack
 
-        //disables activity start animation
         Intent intent = new Intent(loginActivity, HomeActivity.class);
-        //intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         loginActivity.setResult(Activity.RESULT_OK);
         loginActivity.finish();
         loginActivity.startActivity(intent);
         //disables activity finish animation
+        loginActivity.overridePendingTransition(0, 0);
+
         Toast toast = Toast.makeText(loginActivity, "Successfully logged in!", Toast.LENGTH_SHORT);
+
+        //Toast toast = Toast.makeText(loginActivity, "finishing? " + loginActivity.isFinishing() , Toast.LENGTH_SHORT);
         toast.setGravity(Gravity.CENTER, 0, 0);
         toast.show();
-        loginActivity.overridePendingTransition(0, 0);
+
 
 
         return;
