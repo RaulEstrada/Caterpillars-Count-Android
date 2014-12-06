@@ -107,7 +107,7 @@ public class SubmitOrderResponseHandler extends JsonHttpResponseHandler {
         //homeActivity.getUploadMetaDataProgressDialog().dismiss();
         homeActivity.notificationFailure();
         //Log.d("caterpillars", responseString);
-        Toast toast = Toast.makeText(activity, responseString + statusCode, Toast.LENGTH_SHORT);
+        Toast toast = Toast.makeText(activity, "Error submitting Arthropod Order", Toast.LENGTH_SHORT);
         toast.setGravity(Gravity.CENTER, 0, 0);
         toast.show();
         return;

@@ -109,7 +109,7 @@ public class WelcomeActivity extends Activity {
         registerButton.setVisibility(View.VISIBLE);
 
 
-        privacy.setVisibility(View.VISIBLE);
+        privacy.setVisibility(View.INVISIBLE);
 
         if(animate) {
 

@@ -1,5 +1,6 @@
 package com.jforce.caterpillarscount;
 
+import android.app.Activity;
 import android.view.View;
 import android.widget.AdapterView;
 
@@ -8,16 +9,25 @@ import android.widget.AdapterView;
  */
 public class SiteSpinnerController implements AdapterView.OnItemSelectedListener {
 
+    Activity activity;
+
+    public SiteSpinnerController(Activity activity){
+        this.activity = activity;
+
+    }
+
     public void onItemSelected(AdapterView<?> parent, View view,
                                int pos, long id) {
-//        Toast toast = Toast.makeText(view.getContext(), (String) parent.getItemAtPosition(pos), Toast.LENGTH_SHORT);
-//        toast.show();
-
-        HomeActivity activity = (HomeActivity) view.getContext();
-        activity.setSite((String) parent.getItemAtPosition(pos));
 
 
+        HomeActivity homeActivity = (HomeActivity) activity;
 
+        Site site = (Site) parent.getItemAtPosition(pos);
+        String name = site.getName();
+
+        homeActivity.setSite(name);
+
+        homeActivity.populateSpeciesSpinnerByState(site.getStateCode());
 
 
 

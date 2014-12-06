@@ -252,6 +252,7 @@ public class OrderCard extends Card{
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             params.gravity = Gravity.CENTER_HORIZONTAL;
             cardHint.setLayoutParams(params);
+            cardHint.setGravity(Gravity.CENTER_HORIZONTAL);
             layout.addView(cardHint);
 
         }

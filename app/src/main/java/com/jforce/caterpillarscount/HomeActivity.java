@@ -42,16 +42,17 @@ import com.daimajia.androidanimations.library.YoYo;
 import com.doomonafireball.betterpickers.calendardatepicker.CalendarDatePickerDialog;
 import com.doomonafireball.betterpickers.radialtimepicker.RadialPickerLayout;
 import com.doomonafireball.betterpickers.radialtimepicker.RadialTimePickerDialog;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -213,8 +214,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     public void logout(){
 
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putBoolean("loggedIn", false);
-        editor.putBoolean("seenAnimation", false);
+        editor.clear();
         editor.commit();
         firstTimeSetup();
 
@@ -240,14 +240,31 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
 
         Spinner spinner1 = (Spinner) findViewById(R.id.site_spinner);
     // Create an ArrayAdapter using the string array and a default spinner layout
-        ArrayAdapter<CharSequence> adapter1 = ArrayAdapter.createFromResource(this,
-                R.array.site_array, android.R.layout.simple_spinner_item);
-    // Specify the layout to use when the list of choices appears
-        adapter1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // Apply the adapter to the spinner
-        spinner1.setAdapter(adapter1);
+//        ArrayAdapter<CharSequence> adapter1 = ArrayAdapter.createFromResource(this,
+//                R.array.site_array, android.R.layout.simple_spinner_item);
+//    // Specify the layout to use when the list of choices appears
+//        adapter1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//    // Apply the adapter to the spinner
+//        spinner1.setAdapter(adapter1);
 
-        spinner1.setOnItemSelectedListener(new SiteSpinnerController());
+        Gson gson = new Gson();
+
+        ArrayList<Site> emptySites = new ArrayList<Site>();
+        String jsonEmptySites = gson.toJson(emptySites);
+
+        String jsonSites = sharedPreferences.getString("sites", jsonEmptySites);
+
+
+        Type type = new TypeToken<ArrayList<Site>>(){}.getType();
+        ArrayList<Site> sites = gson.fromJson(jsonSites, type);
+
+
+        spinner1.setAdapter(new SiteSpinnerAdapter(this, sites));
+
+        spinner1.setOnItemSelectedListener(new SiteSpinnerController(this));
+
+
+
 
         Spinner spinner2 = (Spinner) findViewById(R.id.circle_spinner);
         // Create an ArrayAdapter using the string array and a default spinner layout
@@ -267,8 +284,11 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         // Apply the adapter to the spinner
         spinner3.setAdapter(adapter3);
 
+        Site site = (Site) spinner1.getSelectedItem();
+        if(site != null){
+            populateSpeciesSpinnerByState(site.getStateCode());
+        }
 
-        populateSpeciesSpinnerByState("NC");
 
 
 
@@ -323,6 +343,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     public void setCircle(int circle){
         this.circle = circle;
     }
+
 
     public void setSurvey(String survey){
         this.survey = survey;
@@ -640,6 +661,158 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         this.sendBroadcast(mediaScanIntent);
     }
 
+    public void addSite(View view){
+
+        final View v = view;
+
+        final Activity activity = this;
+
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        //builder.setTitle("Plant Infomation");
+        builder.setView(getLayoutInflater().inflate(R.layout.dialog_add_site, null));
+        builder.setCustomTitle(getLayoutInflater().inflate(R.layout.dialog_add_site_title, null));
+        builder.setCancelable(true)
+                .setPositiveButton("Submit", new DialogInterface.OnClickListener() {
+
+                    public void onClick(DialogInterface dialog, int id) {
+
+                        AlertDialog alertDialog = (AlertDialog) dialog;
+
+
+
+                        EditText etID = (EditText) alertDialog.findViewById(R.id.siteid_edittext);
+                        EditText etPassword = (EditText) alertDialog.findViewById(R.id.sitepassword_edittext);
+
+                        int siteID = Integer.parseInt(etID.getText().toString());
+                        String sitePassword = etPassword.getText().toString();
+
+
+                        //construct the JSON object to be POSTed
+                        JSONObject jsonParams = new JSONObject();
+                        StringEntity entity = null;
+                        try {
+                            jsonParams.put("action", "checkSitePassword");
+                            jsonParams.put("siteID", siteID);
+                            jsonParams.put("sitePasswordCheck", sitePassword);
+                            entity = new StringEntity(jsonParams.toString());
+                        } catch (Exception e) {
+                            Toast toast1 = Toast.makeText(v.getContext(), "Something went wrong", Toast.LENGTH_SHORT);
+                            toast1.setGravity(Gravity.CENTER, 0, 0);
+                            toast1.show();
+                        }
+
+
+
+                        SitePasswordResponseHandler handler = new SitePasswordResponseHandler(activity, siteID, sitePassword);
+
+                        if (entity == null) {
+                            Toast toast1 = Toast.makeText(v.getContext(), "Something went wrong", Toast.LENGTH_SHORT);
+                            toast1.setGravity(Gravity.CENTER, 0, 0);
+                            toast1.show();
+                        }
+
+                        RestClient.postJson(activity, "sites.php", entity, "application/json", handler);
+
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+                });
+
+        AlertDialog alertdialog = builder.create();
+        alertdialog.show();
+
+
+    }
+
+    public void downloadSite(int siteID, String sitePassword){
+
+        //construct the JSON object to be POSTed
+        JSONObject jsonParams = new JSONObject();
+        StringEntity entity = null;
+        try {
+            jsonParams.put("action", "getOneByID");
+            jsonParams.put("siteID", siteID);
+            entity = new StringEntity(jsonParams.toString());
+        } catch (Exception e) {
+            Toast toast1 = Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT);
+            toast1.setGravity(Gravity.CENTER, 0, 0);
+            toast1.show();
+        }
+
+        SiteDownloadResponseHandler handler = new SiteDownloadResponseHandler(this, sitePassword);
+
+        if (entity == null) {
+            Toast toast1 = Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT);
+            toast1.setGravity(Gravity.CENTER, 0, 0);
+            toast1.show();
+        }
+
+        RestClient.postJson(this, "sites.php", entity, "application/json", handler);
+
+    }
+
+    public void saveSite(Site site){
+
+
+
+        Gson gson = new Gson();
+
+        ArrayList<Site> emptySites = new ArrayList<Site>();
+        String jsonEmptySites = gson.toJson(emptySites);
+
+        String jsonSites = sharedPreferences.getString("sites", jsonEmptySites);
+
+
+        Type type = new TypeToken<ArrayList<Site>>(){}.getType();
+        ArrayList<Site> sites = gson.fromJson(jsonSites, type);
+
+        for(Site s: sites){
+
+            if(s.compareTo(site) == 0){
+                Toast toast1 = Toast.makeText(this, "Requested site already in site list!", Toast.LENGTH_SHORT);
+                toast1.setGravity(Gravity.CENTER, 0, 0);
+                toast1.show();
+                return;
+            }
+
+        }
+
+        sites.add(site);
+
+
+        SharedPreferences.Editor prefsEditor = sharedPreferences.edit();
+
+
+        String serializedSites = gson.toJson(sites);
+        prefsEditor.putString("sites", serializedSites);
+        prefsEditor.commit();
+
+
+
+        Toast toast1 = Toast.makeText(this, site.getName() + " successfully added!", Toast.LENGTH_SHORT);
+        toast1.setGravity(Gravity.CENTER, 0, 0);
+        toast1.show();
+
+        Spinner spinner1 = (Spinner) findViewById(R.id.site_spinner);
+        SiteSpinnerAdapter adapter = new SiteSpinnerAdapter(this, sites);
+        spinner1.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
+        spinner1.setSelection(sites.size() -1);
+        populateSpeciesSpinnerByState(site.getStateCode());
+
+
+
+    }
+
+
+
+
+
+
     public Bundle getPicBundle() {
         return picBundle;
     }
@@ -698,7 +871,19 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         }
 
 
+        //siteID
+        Spinner siteSpinner = (Spinner) findViewById(R.id.site_spinner);
+        Site site = (Site) siteSpinner.getSelectedItem();
 
+        if(site == null){
+
+            Toast toast = Toast.makeText(this, "Please select a site", Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
+
+            YoYo.with(Techniques.Shake).playOn(findViewById(R.id.site_spinner));
+            return;
+        }
 
 
         if(!hasPhoto){
@@ -769,8 +954,15 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
 
         //siteID
         Spinner siteSpinner = (Spinner) findViewById(R.id.site_spinner);
-        int siteID = siteSpinner.getSelectedItemPosition();
-        jsonParams.put("siteID", 18);
+        Site site = (Site) siteSpinner.getSelectedItem();
+
+        if(site == null){
+            notificationFailure();
+            Toast toast = Toast.makeText(this, "Please select a site", Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
+        }
+        jsonParams.put("siteID", site.getSiteID());
         //Log.d("caterpillars", Integer.toString(siteID + 3));
 
 
@@ -1495,7 +1687,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.ic_stat_file_cloud_off)
                         .setContentTitle("Upload Failed")
-                        .setContentText("Tap to retry")
+                        //.setContentText("Tap to retry")
                         .setProgress(0, 0, false)
                         .setOngoing(false);
 
@@ -1524,7 +1716,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     public String trimDomainPrefix(String string){
 
 
-        final int trimLength = "domain/".length();
+        final int trimLength = "uploads/".length();
 
         return string.substring(trimLength);
 
@@ -1602,7 +1794,6 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     public void populateSpeciesSpinnerByState(String stateCode){
 
         new ParseSpeciesTask(this, stateCode).execute();
-
 
     }
 

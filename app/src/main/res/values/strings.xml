@@ -21,7 +21,7 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="plant_species_hint">Plant Species (if known)</string>
     <string name="plant_info">Plant Information</string>
-    <string name="ordercards_fragment_hint">Tap NEW to add Arthropod Orders!</string>
+    <string name="ordercards_fragment_hint">Tap NEW to add Arthropod Orders!\n\nIf no Arthropod Orders were observed, continue to Plant Information</string>
     <string name="plant_photo">Leaf Photo</string>
     <string name="plant_photo_button_text">CAPTURE</string>
     <string name="submit">SUBMIT</string>

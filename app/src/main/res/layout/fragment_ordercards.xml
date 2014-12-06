@@ -16,7 +16,8 @@
             android:text="@string/ordercards_fragment_hint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"/>
+            android:gravity="center_horizontal"
+            />
 
 
         <it.gmariotti.cardslib.library.view.CardListView

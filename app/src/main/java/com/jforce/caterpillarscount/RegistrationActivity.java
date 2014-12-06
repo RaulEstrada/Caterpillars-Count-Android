@@ -13,9 +13,9 @@ import android.widget.Toast;
 
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
-import com.google.gson.JsonObject;
-import com.koushikdutta.ion.Ion;
-import com.koushikdutta.ion.Response;
+//import com.google.gson.JsonObject;
+//import com.koushikdutta.ion.Ion;
+//import com.koushikdutta.ion.Response;
 
 import org.apache.http.entity.StringEntity;
 import org.json.JSONException;
