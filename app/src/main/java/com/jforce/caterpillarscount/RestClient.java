@@ -7,7 +7,7 @@ import com.loopj.android.http.*;
 
 public class RestClient {
 	
-	private static final String BASE_URL = "https://secure28.webhostinghub.com/~pocket14/forsyth.im/caterpillars/";
+	private static final String BASE_URL = "http://caterpillars-hurlbert.apps.unc.edu/api/";
 
 	  private static AsyncHttpClient client = new AsyncHttpClient();
 
