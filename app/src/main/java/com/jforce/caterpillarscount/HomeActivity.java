@@ -45,6 +45,7 @@ import com.doomonafireball.betterpickers.radialtimepicker.RadialTimePickerDialog
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import java.io.File;
@@ -1128,9 +1129,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
             if(card.getPhotoPath()!=null){
                 try{
                     postImage(card.getPhotoPath());
-                } catch (Exception e){
-
-                }
+                } catch (Exception e){}
             }
 
             StringEntity entity;

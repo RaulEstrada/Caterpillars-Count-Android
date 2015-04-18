@@ -8,6 +8,7 @@ import android.widget.Toast;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
 import org.apache.http.Header;
+import org.apache.http.entity.StringEntity;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -32,18 +33,22 @@ public class SubmitOrderResponseHandler extends JsonHttpResponseHandler {
 
     @Override
     public void onSuccess(int statusCode, Header[] headers, JSONObject response){
-
-
         HomeActivity homeActivity = (HomeActivity) activity;
-
-
         String insectPhoto;
-
+        String orderId;
         try {
-            insectPhoto = response.getString("insectPhoto");
+            insectPhoto = ((OrderCard)homeActivity.getCardList().get(i)).getPhotoPath();
+            String[] parts = insectPhoto.split("/");
+            insectPhoto = "uploads/" + parts[parts.length-1];
+            orderId = response.getString("orderID");
+            JSONObject jsonParams = new JSONObject();
+            jsonParams.put("type","order");
+            jsonParams.put("order", orderId);
+            jsonParams.put("picture", insectPhoto);
+            try{
+                RestClient.postJson(activity,"updatePicture.php",new StringEntity(jsonParams.toString()),"application/json", new ChangePicturePath());
+            } catch (Exception e){}
         } catch (JSONException e) {
-
-            //homeActivity.getUploadMetaDataProgressDialog().dismiss();
             homeActivity.notificationFailure();
             Toast toast = Toast.makeText(activity, "Something went wrong", Toast.LENGTH_SHORT);
             toast.setGravity(Gravity.CENTER, 0, 0);
@@ -91,5 +96,12 @@ public class SubmitOrderResponseHandler extends JsonHttpResponseHandler {
         toast.show();
         return;
 
+    }
+
+    public class ChangePicturePath extends JsonHttpResponseHandler{
+        @Override
+        public void onSuccess(int statusCode, Header[] headers, JSONObject response){}
+        @Override
+        public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {}
     }
 }
