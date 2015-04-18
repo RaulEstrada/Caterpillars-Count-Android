@@ -8,6 +8,7 @@ import android.widget.Toast;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
 import org.apache.http.Header;
+import org.apache.http.entity.StringEntity;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,7 +35,16 @@ public class SubmitSurveyResponseHandler extends JsonHttpResponseHandler {
 
         try {
             surveyID = response.getInt("surveyID");
-            leavePhoto = response.getString("leavePhoto");
+            leavePhoto = homeActivity.leafPictureName;
+            String[] parts = leavePhoto.split("/");
+            leavePhoto = "uploads/" + parts[parts.length-1];
+            JSONObject jsonParams = new JSONObject();
+            jsonParams.put("type","survey");
+            jsonParams.put("survey", surveyID);
+            jsonParams.put("picture", leavePhoto);
+            try{
+                RestClient.postJson(activity,"updatePicture.php",new StringEntity(jsonParams.toString()),"application/json", new ChangePicturePath());
+            } catch (Exception e){}
         } catch (JSONException e) {
             homeActivity.notificationFailure();
             //"Something went wrong"

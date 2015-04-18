@@ -97,11 +97,4 @@ public class SubmitOrderResponseHandler extends JsonHttpResponseHandler {
         return;
 
     }
-
-    public class ChangePicturePath extends JsonHttpResponseHandler{
-        @Override
-        public void onSuccess(int statusCode, Header[] headers, JSONObject response){}
-        @Override
-        public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {}
-    }
 }
