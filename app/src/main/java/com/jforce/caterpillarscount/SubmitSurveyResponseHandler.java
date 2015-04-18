@@ -27,8 +27,6 @@ public class SubmitSurveyResponseHandler extends JsonHttpResponseHandler {
 
     @Override
     public void onSuccess(int statusCode, Header[] headers, JSONObject response){
-
-
         HomeActivity homeActivity = (HomeActivity) activity;
 
         int surveyID;
@@ -38,8 +36,6 @@ public class SubmitSurveyResponseHandler extends JsonHttpResponseHandler {
             surveyID = response.getInt("surveyID");
             leavePhoto = response.getString("leavePhoto");
         } catch (JSONException e) {
-
-            //homeActivity.getUploadMetaDataProgressDialog().dismiss();
             homeActivity.notificationFailure();
             //"Something went wrong"
             Toast toast = Toast.makeText(activity, "Something went wrong", Toast.LENGTH_SHORT);
@@ -51,11 +47,10 @@ public class SubmitSurveyResponseHandler extends JsonHttpResponseHandler {
         try{
             homeActivity.setSurveyPhotoName(leavePhoto);
             homeActivity.submitOrders(surveyID);
+            homeActivity.postImage(homeActivity.leafPictureName);
             return;
         }
         catch (Exception e){
-
-            //homeActivity.getUploadMetaDataProgressDialog().dismiss();
             homeActivity.notificationFailure();
             //"Something went wrong"
             Toast toast = Toast.makeText(activity, "Something went wrong", Toast.LENGTH_SHORT);
@@ -72,7 +67,6 @@ public class SubmitSurveyResponseHandler extends JsonHttpResponseHandler {
     public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
         HomeActivity homeActivity = (HomeActivity) activity;
 
-        //homeActivity.getUploadMetaDataProgressDialog().dismiss();
         homeActivity.notificationFailure();
         Log.d("caterpillars", responseString);
         Toast toast = Toast.makeText(activity, responseString + statusCode, Toast.LENGTH_SHORT);

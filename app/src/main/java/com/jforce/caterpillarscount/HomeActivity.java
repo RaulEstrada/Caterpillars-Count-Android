@@ -94,6 +94,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     private Bundle picBundle;
 
     private String surveyPhotoName;
+    public String leafPictureName;
     private ArrayList<String> orderPhotoNames;
 
 
@@ -606,7 +607,12 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         this.mCardArrayAdapter = adapter;
     }
 
-    public void takePicture(View view) {
+    public void takePictureLeaf(View view){
+        File f = takePicture(view);
+        this.leafPictureName = f.getPath();
+    }
+
+    public File takePicture(View view) {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -630,7 +636,9 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
                         Uri.fromFile(photoFile));
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
             }
+            return photoFile;
         }
+        return null;
     }
 
     public File createImageFile() throws IOException {
@@ -1060,29 +1068,9 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     }
 
     public void submitOrders(int surveyID) throws JSONException{
-
-//        Toast toast = Toast.makeText(this, "Survey submitted with ID" + surveyID, Toast.LENGTH_SHORT);
-//        toast.setGravity(Gravity.CENTER, 0, 0);
-//        toast.show();
-
-
         if(cards.size() == 0){
-
-            try{
-                ftpUploadImages();
-
-            }
-            catch (Exception e){
-                notificationFailure();
-                Toast toast = Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT);
-                toast.setGravity(Gravity.CENTER, 0, 0);
-                toast.show();
-                return;
-            }
-
             notificationImages(null, null, null);
             return;
-
         }
 
         for (int i = 0; i < cards.size(); i++){
@@ -1099,7 +1087,6 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
             //userID
             int userID = sharedPreferences.getInt("userID", -1);
             if(userID == -1){
-                //getUploadMetaDataProgressDialog().dismiss();
                 notificationFailure();
                 Toast toast = Toast.makeText(this, "Internal error: please log out and log back in", Toast.LENGTH_SHORT);
                 toast.setGravity(Gravity.CENTER, 0, 0);
@@ -1138,12 +1125,19 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
             jsonParams.put("orderCount", orderCount);
             Log.d("orderCount", Integer.toString(orderCount));
 
+            if(card.getPhotoPath()!=null){
+                try{
+                    postImage(card.getPhotoPath());
+                } catch (Exception e){
+
+                }
+            }
+
             StringEntity entity;
             try {
                 entity = new StringEntity(jsonParams.toString());
             }
             catch (Exception e){
-                //getUploadMetaDataProgressDialog().dismiss();
                 notificationFailure();
                 Toast toast = Toast.makeText(this, "Internal error: please retry", Toast.LENGTH_SHORT);
                 toast.setGravity(Gravity.CENTER, 0, 0);
@@ -1152,10 +1146,7 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
             }
             SubmitOrderResponseHandler handler = new SubmitOrderResponseHandler(this, cards.size(), i);
             RestClient.postJson(this,"submission_full.php",entity,"application/json",handler);
-
-
         }
-
     }
 
     public void setUploadSuccess(boolean uploadSuccess) {
@@ -1174,16 +1165,10 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
 
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        //builder.setTitle("Site Information");
         builder.setCustomTitle(getLayoutInflater().inflate(R.layout.dialog_site_info_title, null));
         builder.setMessage("Enter the Site, Circle, and Survey associated with where you are currently recording data.\n\n" +
                 "Enter any notes that you may deem relevant to data reviewers");
         builder.setCancelable(true)
-//                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int id) {
-//                        //MyActivity.this.finish();
-//                    }
-//                })
                 .setNegativeButton("Got it!", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.dismiss();
@@ -1199,7 +1184,6 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
 
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        //builder.setTitle("Arthropod Order Info");
         builder.setCustomTitle(getLayoutInflater().inflate(R.layout.dialog_order_info_title, null));
         builder.setMessage("Add a record for each Arthropod Order that you see, estimating its length in mm " +
                 "and noting how many you saw.\n\n" +
@@ -1207,11 +1191,6 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
                 "(e.g., you saw 10 ants of size 4 mm, and 3 ants of size 12 mm).\n\n" +
                 "You can add multiple Arthropod Orders to each submission.");
         builder.setCancelable(true)
-//                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int id) {
-//                        //MyActivity.this.finish();
-//                    }
-//                })
                 .setNegativeButton("Got it!", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.dismiss();
@@ -1227,19 +1206,12 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
 
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        //builder.setTitle("Plant Infomation");
         builder.setMessage("Select the name of the plant species that you surveyed from the drop-down menu below. " +
                 "If the desired plant species does not appear in the list, select " +
                 "'Other' and enter the plant species manually into the text field that appears.\n\n" +
                 "Choose the herbivory score that best characterizes the average level of herbivory across all leaves examined in the survey.");
-        //builder.setView(getLayoutInflater().inflate(R.layout.dialog_leaf_photo, null));
         builder.setCustomTitle(getLayoutInflater().inflate(R.layout.dialog_plant_info_title, null));
         builder.setCancelable(true)
-//                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int id) {
-//                        //MyActivity.this.finish();
-//                    }
-//                })
                 .setNegativeButton("Got it!", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.dismiss();
@@ -1255,344 +1227,25 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     public void openLeafPhotoDialog(View view){
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        //builder.setTitle("Plant Infomation");
         builder.setView(getLayoutInflater().inflate(R.layout.dialog_leaf_photo, null));
         builder.setCustomTitle(getLayoutInflater().inflate(R.layout.dialog_leaf_photo_title, null));
         builder.setCancelable(true)
-//                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int id) {
-//                        //MyActivity.this.finish();
-//                    }
-//                })
                 .setNegativeButton("Got it!", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.dismiss();
                     }
                 });
-
         AlertDialog alertdialog = builder.create();
         alertdialog.show();
-
-
-
-
-
     }
 
-
-
-    public void postImage(View view) throws FileNotFoundException{
-        RequestParams params = new RequestParams();
-        OrderCard card = (OrderCard) cards.get(0);
-        params.put("image", new File(card.getPhotoPath()));
-        RestClient.postFile(this, "uploads.php", params, new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int code, Header[] h, byte[] b) {
-                Log.w("boogieman", "success!!!!");
-                Log.w("boogieman", b.toString());
-                Log.w("boogieman", Integer.toString(code));
-            }
-            @Override
-            public void onFailure(int code, Header[] h, byte[] b, Throwable t) {
-                Log.w("boogieman", "failure!!!!");
-                Log.w("boogieman", b.toString());
-                Log.w("boogieman", Integer.toString(code));
-
-            }
-
-        });
-    }
-
-    public void ftpUploadImages() throws IOException{
-
-
-
-        new UploadImagesTask(this).execute();
-
-
-    }
-
-    public class UploadImagesTask extends AsyncTask<Void, Integer, Boolean> {
-
-        boolean exception;
-        Activity activity;
-
-        public UploadImagesTask(Activity activity){
-            this.activity = activity;
-            exception = false;
-
-
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... v) {
-
-
-
-
-
-            //establish connection
-
-            //FTPClient ftpClient = new FTPClient();
-            FTPClient ftpClient = new FTPClient();
-            try {
-                //ftpClient.connect(InetAddress.getByName("pocketprotection.org"));
-                ftpClient.connect("pocketprotection.org");
-            }
-            catch (Exception e){
-
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        Toast toast = Toast.makeText(activity, "Error finding server", Toast.LENGTH_SHORT);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
-                        toast.show();
-
-                    }
-                });
-
-                return false;
-
-
-            }
-
-            try {
-                ftpClient.login("caterpillars@pocketprotection.org", "password123");
-
-            }
-            catch (Exception e){
-
-
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        Toast toast = Toast.makeText(activity, "Error connecting to server", Toast.LENGTH_SHORT);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
-                        toast.show();
-                    }
-                });
-                return false;
-            }
-
-
-
-            ArrayList<Card> cardsWithPics = new ArrayList<Card>();
-            for(Card c : cards){
-                OrderCard oc = (OrderCard) c;
-                if(oc.containsPic()){
-                    cardsWithPics.add(oc);
-                }
-            }
-
-
-
-            for(int i = 0; i <  cardsWithPics.size() + 1; i++){
-
-                final File file;
-
-                //get the file
-
-                if(i == 0){
-                    file = new File(mCurrentPhotoPath);
-                }
-                else{
-                    OrderCard card = (OrderCard) cardsWithPics.get(i-1);
-
-                    file = new File(card.getPhotoPath());
-
-                }
-
-
-
-
-                try {
-                    //ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-                    ftpClient.setType(FTPClient.TYPE_BINARY);
-                }
-                catch (Exception e){
-                    Toast toast = Toast.makeText(activity, "Error getting files ready", Toast.LENGTH_SHORT);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
-                    toast.show();
-
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            Toast toast = Toast.makeText(activity, "Error getting files ready", Toast.LENGTH_SHORT);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
-                            toast.show();
-                        }
-                    });
-                    return false;
-                }
-
-
-
-
-
-
-
-
-                //BufferedInputStream buffIn;
-
-                try {
-                    //buffIn = new BufferedInputStream(new FileInputStream(file));
-
-                }
-                catch (Exception e){
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            Toast toast = Toast.makeText(activity, "Error getting files ready", Toast.LENGTH_SHORT);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
-                            toast.show();
-                        }
-                    });
-
-
-
-                    return false;
-
-                }
-
-                try {
-
-
-                    //ftpClient.enterLocalPassiveMode();
-                    ftpClient.setPassive(true);
-
-
-
-
-                    //FTPClientProgressListener ftpClientProgressListener = new FTPClientProgressListener(this, file, i + 1, cards.size() + 1);
-
-//                    final Integer current = i + 1;
-//                    final Integer total = cards.size() + 1;
-//
-//                    CopyStreamAdapter streamListener = new CopyStreamAdapter() {
-//
-//                        @Override
-//                        public void bytesTransferred(long totalBytesTransferred, int bytesTransferred, long streamSize) {
-//                            //this method will be called everytime some bytes are transferred
-//
-//                            int percent = (int)(totalBytesTransferred*100/file.length());
-//                            // update your progress bar with this percentage
-//                            publishProgress(percent, current, total);
-//                        }
-//
-//
-//                    };
-
-
-                    //ftpClient.setCopyStreamListener(ftpClientProgressListener);
-                    //ftpClient.setCopyStreamListener(streamListener);
-
-
-                    //publishProgress(5, i+1, cards.size() + 1);
-
-
-                    if(i == 0) {
-                        //trimDomainPrefix(surveyPhotoName)
-                        //"test" + i + ".jpg"
-
-                        //Set the FTPClient listener to show progress
-
-
-
-                        //ftpClient.storeFile(trimDomainPrefix(surveyPhotoName), buffIn);
-                        ftpClient.upload(file, new MyTransferListener(this, file, i + 1, cardsWithPics.size() + 1));
-                        ftpClient.rename(trimAbsolutePath(mCurrentPhotoPath), trimDomainPrefix(surveyPhotoName));
-
-                    }
-                    else{
-
-                        //trimDomainPrefix(orderPhotoNames.get(i - 1))
-                        //ftpClient.storeFile(trimDomainPrefix(orderPhotoNames.get(i - 1)), buffIn);
-
-                        ftpClient.upload(file, new MyTransferListener(this, file, i + 1, cardsWithPics.size() + 1));
-                        OrderCard card = (OrderCard) cardsWithPics.get(i-1);
-                        ftpClient.rename(trimAbsolutePath(card.getPhotoPath()), trimDomainPrefix(orderPhotoNames.get(i - 1)));
-
-
-                    }
-                    //buffIn.close();
-
-                }
-                catch (Exception e){
-
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            Toast toast = Toast.makeText(activity, "Error uploading image", Toast.LENGTH_SHORT);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
-                            toast.show();
-                        }
-                    });
-
-                    return false;
-
-                }
-
-            }
-
-
-
-            try {
-                //ftpClient.logout();
-                //ftpClient.disconnect();
-                ftpClient.disconnect(true);
-            }
-            catch (Exception e){
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        Toast toast = Toast.makeText(activity, "Error disconnecting from server", Toast.LENGTH_SHORT);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
-                        toast.show();
-                    }
-                });
-
-                return false;
-
-
-            }
-
-
-            return true;
-
-        }
-
-        public void myPublishProgress(Integer... progress){
-            publishProgress(progress[0], progress[1], progress[2]);
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... progress) {
-            notificationImages(progress[0], progress[1], progress[2]);
-        }
-
-
-        @Override
-        protected void onPostExecute(Boolean result) {
-
-
-
-            if(result){
-                notificationComplete();
-                Toast toast = Toast.makeText(activity, "Upload complete!", Toast.LENGTH_SHORT);
-                toast.setGravity(Gravity.CENTER, 0, 0);
-                toast.show();
-
-
-            }
-            else{
-                notificationFailure();
-
-//                Toast toast = Toast.makeText(activity, "Upload failed", Toast.LENGTH_SHORT);
-//                toast.setGravity(Gravity.CENTER, 0, 0);
-//                toast.show();
-
-            }
-
-
+    public void postImage(String photoPath) throws FileNotFoundException{
+        if (photoPath != null){
+            RestClient.postFile(this, photoPath);
         }
     }
 
     public void notificationStart(){
-
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.ic_stat_file_file_upload)
@@ -1604,12 +1257,9 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         // Builds the notification and issues it.
         mNotifyMgr.notify(this.NOTIFICATION_ID, mBuilder.build());
-
-
     }
 
     public void notificationData(){
-
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.ic_stat_file_file_upload)
@@ -1617,30 +1267,12 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
                         .setContentText("Upload is in progress")
                         .setProgress(0, 0, true)
                         .setOngoing(true);
-
         NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         // Builds the notification and issues it.
         mNotifyMgr.notify(this.NOTIFICATION_ID, mBuilder.build());
-
-
     }
 
-
     public void notificationImages(Integer progress, Integer current, Integer total){
-
-//       final Integer progress = progress1;
-//       final Integer current = current1;
-//       final Integer total = total1;
-//       final Activity activity = this;
-
-
-
-
-//        // Start a lengthy operation in a background thread
-//        new Thread(
-//                new Runnable() {
-//                    @Override
-//                    public void run() {
                         NotificationCompat.Builder mBuilder =
                                 new NotificationCompat.Builder(this)
                                         .setSmallIcon(R.drawable.ic_stat_file_file_upload)
@@ -1662,32 +1294,14 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
                         NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
                         // Builds the notification and issues it.
                         mNotifyMgr.notify(NOTIFICATION_ID, mBuilder.build());
-//                    }
-//                }
-//                // Starts the thread by calling the run() method in its Runnable
-//        ).start();
-
-
-
-
-
-
-
-
     }
 
 
     public void notificationFailure(){
-
-
-
-
-
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.ic_stat_file_cloud_off)
                         .setContentTitle("Upload Failed")
-                        //.setContentText("Tap to retry")
                         .setProgress(0, 0, false)
                         .setOngoing(false);
 
@@ -1698,7 +1312,6 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
     }
 
     public void notificationComplete(){
-
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.ic_stat_file_cloud_done)
@@ -1710,86 +1323,18 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         // Builds the notification and issues it.
         mNotifyMgr.notify(this.NOTIFICATION_ID, mBuilder.build());
-
     }
 
     public String trimDomainPrefix(String string){
-
-
         final int trimLength = "uploads/".length();
-
         return string.substring(trimLength);
-
-
-
     }
 
     public String trimAbsolutePath(String string){
-
         String[] parts = string.split("/");
-
         int length = parts.length;
-
         return parts[length - 1];
-
     }
-
-
-
-
-    public class MyTransferListener implements FTPDataTransferListener {
-
-        private UploadImagesTask task;
-        private File file;
-        private Integer current;
-        private Integer total;
-
-
-        private long transferred;
-        private long fileLength;
-
-        public MyTransferListener(UploadImagesTask task, File file, Integer current, Integer total){
-
-            this.task = task;
-            this.file = file;
-            this.current = current;
-            this.total = total;
-
-
-            fileLength = file.length();
-
-        }
-
-        public void started() {
-            // Transfer started
-        }
-
-        public void transferred(int length) {
-            // Yet other length bytes has been transferred since the last time this
-            // method was called
-
-            transferred = transferred + length;
-            int percent = (int)(transferred*100/fileLength);
-            task.myPublishProgress(percent, current, total);
-
-        }
-
-        public void completed() {
-            // Transfer completed
-        }
-
-        public void aborted() {
-            // Transfer aborted
-        }
-
-        public void failed() {
-            // Transfer failed
-        }
-
-    }
-
-
-
 
     public void populateSpeciesSpinnerByState(String stateCode){
 
@@ -1808,8 +1353,6 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         spinner4.setAdapter(adapter4);
         spinner4.setOnItemSelectedListener(new SpeciesSpinnerController());
     }
-
-
 
 
     public class ParseSpeciesTask extends AsyncTask<Void, Integer, Boolean> {
@@ -1840,98 +1383,30 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
 
                 String[] cells = line.split(",");
 
-                //Log.d("ayylmao", cells[0]);
-
                 String state = cells[0].replace("\"", "");
                 String species = cells[1].replace("\"", "");
 
                 if(stateCode.equals(state)){
 
                     values.add(species);
-                    //Log.d("ayylmao", cells[1]);
                 }
-
-
             }
-
-
-
-//            BufferedReader br;
-//            try{
-//                br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-//
-//            }
-//            catch (Exception e){
-//                Toast toast = Toast.makeText(activity, "Something went wrong", Toast.LENGTH_SHORT);
-//                toast.setGravity(Gravity.CENTER, 0, 0);
-//                toast.show();
-//                return false;
-//
-//            }
-//
-//            String line = "";
-//
-//            try {
-//
-//                while ((line = br.readLine()) != null) {
-//
-//                    // use comma as separator
-//                    String[] cells = line.split(",");
-//
-//                    if(stateCode.equals(cells[0])){
-//
-//
-//                        values.add(cells[1]);
-//
-//                    }
-//
-//
-//
-//                }
-//            }
-//            catch (Exception e){
-//                Toast toast = Toast.makeText(activity, "Something went wrong", Toast.LENGTH_SHORT);
-//                toast.setGravity(Gravity.CENTER, 0, 0);
-//                toast.show();
-//                return false;
-//            }finally {
-//                if (br != null) {
-//                    try {
-//                        br.close();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-
-
-
             return true;
-
         }
 
 
         @Override
         protected void onPostExecute(Boolean result) {
-
             if(result){
                 HomeActivity homeActivity = (HomeActivity) activity;
 
                 homeActivity.setSpecies(values);
-//                Toast toast = Toast.makeText(activity, "ayy lmao", Toast.LENGTH_SHORT);
-//                toast.setGravity(Gravity.CENTER, 0, 0);
-//                toast.show();
-
             }
             else{
                 Toast toast = Toast.makeText(activity, "Something went wrong", Toast.LENGTH_SHORT);
                 toast.setGravity(Gravity.CENTER, 0, 0);
                 toast.show();
             }
-
-
-
-
         }
     }
 
@@ -1948,25 +1423,16 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
                     .duration(500)
                     .playOn(et);
         }
-
         speciesEditTextIsVisible = true;
-
-
     }
 
     public void hideSpeciesEditText(boolean animate){
-
         final EditText et = (EditText) findViewById(R.id.plantspecies_edittext);
-
-
-
-
         if(animate){
             YoYo.with(Techniques.FadeOut)
                     .duration(500)
                     .playOn(et);
         }
-
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
@@ -1977,9 +1443,6 @@ public class HomeActivity extends FragmentActivity implements RadialTimePickerDi
         }, 500);
 
         speciesEditTextIsVisible = false;
-
-
-
     }
 
 

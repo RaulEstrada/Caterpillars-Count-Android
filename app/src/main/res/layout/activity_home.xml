@@ -339,7 +339,7 @@
             android:layout_marginTop="20dp"
             android:textStyle="bold"
             android:textColor="#355D3D"
-            android:onClick="takePicture"
+            android:onClick="takePictureLeaf"
             android:layout_centerHorizontal="true"
             android:text="@string/plant_photo_button_text"
             android:layout_width="150dp"

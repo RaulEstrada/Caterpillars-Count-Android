@@ -55,7 +55,6 @@ public class SubmitValidResponseHandler extends JsonHttpResponseHandler {
                 return;
             }
             catch (Exception e){
-                //homeActivity.getUploadMetaDataProgressDialog().dismiss();
                 homeActivity.notificationFailure();
                 //"Something went wrong"
                 Toast toast = Toast.makeText(activity, "Something went wrong", Toast.LENGTH_SHORT);
@@ -65,24 +64,17 @@ public class SubmitValidResponseHandler extends JsonHttpResponseHandler {
             }
         }
         else{
-            //homeActivity.getUploadMetaDataProgressDialog().dismiss();
             homeActivity.notificationFailure();
             Toast toast = Toast.makeText(activity, "Account is invalid. Please contact an administrator", Toast.LENGTH_SHORT);
             toast.setGravity(Gravity.CENTER, 0, 0);
             toast.show();
             return;
         }
-
-
-
-
     }
 
     @Override
     public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
         HomeActivity homeActivity = (HomeActivity) activity;
-//
-        //homeActivity.getUploadMetaDataProgressDialog().dismiss();
         homeActivity.notificationFailure();
         Toast toast = Toast.makeText(activity, responseString + " " + statusCode, Toast.LENGTH_SHORT);
         toast.setGravity(Gravity.CENTER, 0, 0);
@@ -90,7 +82,4 @@ public class SubmitValidResponseHandler extends JsonHttpResponseHandler {
         return;
 
     }
-
-
-
 }

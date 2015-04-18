@@ -57,7 +57,6 @@ public class SubmitOrderResponseHandler extends JsonHttpResponseHandler {
             orderPhotoNames.add(insectPhoto);
         }
         catch (Exception e){
-            //homeActivity.getUploadMetaDataProgressDialog().dismiss();
             homeActivity.notificationFailure();
             Toast toast = Toast.makeText(activity, "Something went wrong", Toast.LENGTH_SHORT);
             toast.setGravity(Gravity.CENTER, 0, 0);
@@ -66,17 +65,10 @@ public class SubmitOrderResponseHandler extends JsonHttpResponseHandler {
 
         }
 
-
-
         homeActivity.setOrderPhotoNames(orderPhotoNames);
-        //Log.d("caterpillars", insectPhoto);
 
         if(i + 1 == cardCount){
-
-            //homeActivity.getUploadMetaDataProgressDialog().dismiss();
-
             try{
-                homeActivity.ftpUploadImages();
                 homeActivity.notificationImages(null, null, null);
             }
             catch (Exception e){
@@ -87,37 +79,17 @@ public class SubmitOrderResponseHandler extends JsonHttpResponseHandler {
                 return;
 
             }
-
-
         }
-
-//        Toast toast = Toast.makeText(homeActivity, "Success!", Toast.LENGTH_SHORT);
-//        toast.setGravity(Gravity.CENTER, 0, 0);
-//        toast.show();
-
-
-
-
     }
 
     @Override
     public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
         HomeActivity homeActivity = (HomeActivity) activity;
-
-        //homeActivity.getUploadMetaDataProgressDialog().dismiss();
         homeActivity.notificationFailure();
-        //Log.d("caterpillars", responseString);
         Toast toast = Toast.makeText(activity, "Error submitting Arthropod Order", Toast.LENGTH_SHORT);
         toast.setGravity(Gravity.CENTER, 0, 0);
         toast.show();
         return;
 
     }
-
-
-
-
-
-
-
 }
