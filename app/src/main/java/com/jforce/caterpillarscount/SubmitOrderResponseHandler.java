@@ -39,7 +39,7 @@ public class SubmitOrderResponseHandler extends JsonHttpResponseHandler {
         try {
             insectPhoto = ((OrderCard)homeActivity.getCardList().get(i)).getPhotoPath();
             String[] parts = insectPhoto.split("/");
-            insectPhoto = "uploads/" + parts[parts.length-1];
+            insectPhoto = parts[parts.length-1];
             orderId = response.getString("orderID");
             JSONObject jsonParams = new JSONObject();
             jsonParams.put("type","order");

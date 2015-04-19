@@ -37,7 +37,7 @@ public class SubmitSurveyResponseHandler extends JsonHttpResponseHandler {
             surveyID = response.getInt("surveyID");
             leavePhoto = homeActivity.leafPictureName;
             String[] parts = leavePhoto.split("/");
-            leavePhoto = "uploads/" + parts[parts.length-1];
+            leavePhoto = parts[parts.length-1];
             JSONObject jsonParams = new JSONObject();
             jsonParams.put("type","survey");
             jsonParams.put("survey", surveyID);
