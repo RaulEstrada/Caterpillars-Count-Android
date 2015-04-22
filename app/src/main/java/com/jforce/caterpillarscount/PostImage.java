@@ -35,7 +35,7 @@ public class PostImage extends AsyncTask<Void, Integer, Boolean> {
 
             // open a URL connection to the Servlet
             FileInputStream fileInputStream = new FileInputStream(sourceFile);
-            URL urlUpload = new URL("http://caterpillars-hurlbert.apps.unc.edu/api/uploads.php");
+            URL urlUpload = new URL("http://caterpillarscount.unc.edu/api/uploads.php");
 
             // Open a HTTP  connection to  the URL
             HttpURLConnection conn = (HttpURLConnection) urlUpload.openConnection();

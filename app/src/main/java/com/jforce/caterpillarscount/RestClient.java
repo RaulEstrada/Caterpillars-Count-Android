@@ -14,7 +14,7 @@ import java.net.URL;
 
 public class RestClient {
 	
-	private static final String BASE_URL = "http://caterpillars-hurlbert.apps.unc.edu/api/";
+	private static final String BASE_URL = "http://caterpillarscount.unc.edu/api/";
 
 	private static AsyncHttpClient client = new AsyncHttpClient();
 
